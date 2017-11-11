@@ -1,0 +1,2 @@
+
+*/10 * * * * /share/ScratchGeneral/jamtor/projects/hgsoc_repeats/RNA-seq/scripts/repeatsPipeline/exp7/redo.bash

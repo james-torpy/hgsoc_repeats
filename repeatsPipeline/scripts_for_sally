@@ -1,0 +1,47 @@
+# make directory hierachy:
+projectname="hgsoc_repeats"
+
+homeDir="/share/ClusterShare/thingamajigs/jamtor/"
+projectDir="$homeDir/projects/$projectname/RNA-seq/"
+rawDir="$projectDir/raw_files/"
+
+# scripts/logs directories:
+scriptsPath="/share/ScratchGeneral/jamtor/projects/hgsoc_repeats/RNA-seq/scripts/"
+logDir="$scriptsPath/logs/bam_to_fastq/"
+oldDir="$logDir/old/"
+
+mkdir -p $oldDir
+
+# fetch logs with errors, and identify the samples to be redone:
+for f in $logDir/*; do
+	err=`grep -E 'error|ERROR|Error|halted' $f | grep -v ERROR: | grep -v error:`
+	if [ ${#err} -gt 1 ]; then
+		id=`basename $f | sed s'/^.*_//' | sed 's/.o[0-9].*//'`
+
+		if [ -e "$rawDir/fullsamples/bowtell_primary/record.txt" ]; then
+			g=( $(grep $id "$rawDir/fullsamples/bowtell_primary/record.txt") )
+			len=`echo ${g[@]} | wc -w`
+			echo -e
+			echo $id >> "$rawDir/fullsamples/bowtell_primary/files.txt"
+			echo $id >> "$rawDir/fullsamples/bowtell_primary/record.txt"
+			export largecores=$((4*$len+16))
+			export countcores=$((4*$len+19))
+			echo "$id is being re-done with $largecores largecores and $countcores countcores, number of redos = $len"
+		else echo -e
+			 echo "$id is being re-done with 16 largecores and 19 countcores"
+			 echo $id >> "$rawDir/fullsamples/bowtell_primary/files.txt"
+			 echo $id >> "$rawDir/fullsamples/bowtell_primary/record.txt"
+			 export largecores=16
+			 export countcores=19
+		fi;
+
+	# move logs to oldDir:
+	mv $logDir/*$id* $oldDir
+	fi;
+done;
+
+# call repeats pipeline for samples with errors:
+source $scriptsPath/repeatsPipeline/1.bam_to_fastq.bash
+
+
+

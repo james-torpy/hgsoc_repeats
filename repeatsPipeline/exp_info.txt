@@ -1,0 +1,16 @@
+exp1:
+repeats contained + and - in strand info
+GC not reduced for DE
+
+exp2:
+repeats contain only * in strand info
+GC reduced for DE
+
+exp3:
+repeats contain only * in strand info
+GC contained only * in strand info
+GC reduced for DE
+
+exp4:
+repeats contain only * in strand info
+GC not reduced for DE

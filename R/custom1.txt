@@ -1,0 +1,19 @@
+# make list of classes:
+# LINE1/L1, DNA/TcMar-Tigger, LTR/ERVL-MaLR, LTR/ERV1, 
+# LTR/ERVL?, DNA/hAT?
+tempL <- GRangesList(cGenes[[2]][[3]],
+	cGenes[[1]][[12]],
+	cGenes[[3]][[6]],
+	cGenes[[3]][[2]],
+	cGenes[[3]][[3]],
+	cGenes[[1]][[21]]
+	)
+
+
+# L1MD, MER, MST, PABL, RC?/Helitron?, RC/Helitron, LTR/ERVL?
+custom1 <- c(tempL, tGenes[[27]][grep("L1MD", names(tGenes[[27]]))]
+	tGenes[[22]][grep("MER", names(tGenes[[22]]))],
+	tGenes[[39]][grep("MST", names(tGenes[[39]]))],
+	tGenes[[35]][grep("PABL", names(tGenes[[35]]))],
+	cGenes[[5]], tGenes[[40]], tGenes[[11]])
+
