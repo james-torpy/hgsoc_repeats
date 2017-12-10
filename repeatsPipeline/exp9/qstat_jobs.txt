@@ -1,0 +1,16 @@
+tarFT1.tar
+tarFT5.tar
+tarFT6.tar
+tarmrPT1.t
+tarmrPT2.t
+tarmrPT3.t
+tarmrPT5.t
+tarmrPT6.t
+tarmrPT7.t
+tarmrPT8.t
+tarmsST1.t
+tarmsST2.t
+tarmsST3.t
+tarmsST4.t
+tarmsST5.t
+tarpAF1.ta

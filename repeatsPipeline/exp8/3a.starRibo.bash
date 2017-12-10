@@ -5,36 +5,13 @@ echo -e
 echo "### 3a.starRibo.bash ###"
 echo -e
 
-draft=$3
-
 date
-
-# make directory hierachy:
-projectname="hgsoc_repeats"
-sampleType="fullsamples/bowtell_primary"
-expName="exp8"
-
-homeDir="/share/ClusterShare/thingamajigs/jamtor/"
-projectDir="$homeDir/projects/$projectname/RNA-seq/"
-rawDir="$projectDir/raw_files/"
-
-# scripts/logs directories:
-scriptsPath="/share/ScratchGeneral/jamtor/projects/hgsoc_repeats/RNA-seq/scripts/repeatsPipeline/"
-
-# set in/outPaths:
-fastqPath="$rawDir/fullsamples/bowtell_primary/fastq/$draft/"
-
-# define genome location:
-genomeName="ribosome"
-genomeDir="/share/ScratchGeneral/jamtor/genomes/$genomeName/"
-
-echo "This is the genomeDir:"
-echo $genomeDir
-echo -e
 
 # fetch input variables and define outDir:
 uID=$1
 numcores=$2
+fastqDir=$3
+riboDir=$4
 
 #input/output:
 outPath="$projectDir/results/star/ribo/$expName/$draft/"

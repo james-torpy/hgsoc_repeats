@@ -13,7 +13,7 @@ import re
 import os
 import pandas as pd
 
-exp_name = 'exp7_and_8'
+exp_name = 'exp9'
 
 # define directories:
 home_dir = '/share/ScratchGeneral/jamtor/'
@@ -25,11 +25,15 @@ ribo_dir = results_dir + '/star/ribo/' + exp_name
 gc_dir = results_dir + '/star/GC/' + exp_name
 htseq_dir = results_dir + '/htseq/' + exp_name
 rkey_dir = project_dir + '/raw_files/fullsamples/bowtell_primary/'
+record_dir = homeDir2 + '/hgsoc_repeats/RNA-seq/results/record'
 
-print 'The report_dir is ' + report_dir
-print 'The ribo_dir is ' + ribo_dir
-print 'The gc_dir is ' + gc_dir
-print 'The htseq_dir is ' + htseq_dir
+os.makedirs(record_dir, exist_ok=True)
+
+print('The report_dir is ' + report_dir)
+print('The ribo_dir is ' + ribo_dir)
+print('The gc_dir is ' + gc_dir)
+print('The htseq_dir is ' + htseq_dir)
+print('The record_dir is ' + record_dir)
 
 
 ### 1. Fetch directory names in reports directory ###
@@ -64,7 +68,7 @@ gc_htseq=[]
 for f in os.walk(htseq_dir):
 	for x in f[2]:
 		if 'htseq' in x and 'subset' not in x:
-			print x
+			print(x)
 			if 'all' in x:
 				all_htseq.append(re.sub('\.all.htseq.txt$', '', x))
 			elif 'custom3' in x:
@@ -88,22 +92,22 @@ record = {'rep':'', 'ribo':'', 'gc':'', 'all_htseq':'', 'custom3_htseq':'',
 
 
 for i in range((len(all_samples_list)-1)+1):
-	print 'for ' + all_samples_list[i]
+	print('for ' + all_samples_list[i])
 	for t in ['rep', 'ribo', 'gc', 'all_htseq', 'custom3_htseq',
 	'gc_htseq']:
 		if i==0:
 			if all_samples_list[i] in eval(t):
-				print 'sample is in ' + t + ', appending to ' + t
+				print('sample is in ' + t + ', appending to ' + t)
 				record[t] = ['True']
 			else:
-				print 'sample not in ' + t
+				print('sample not in ' + t)
 				record[t] = ['False']
 		else:
 			if all_samples_list[i] in eval(t):
-				print 'sample is in ' + t + ', appending to ' + t
+				print('sample is in ' + t + ', appending to ' + t)
 				record[t] = record[t] + ['True']
 			else:
-				print 'sample not in ' + t
+				print('sample not in ' + t)
 				record[t] = record[t] + ['False']
 
 # add sample names to dictionary:
@@ -120,8 +124,10 @@ colnames=["rep","ribo", "gc", "all_htseq", "custom3_htseq",
 "gc_htseq"]
 record_df=record_df.reindex(columns=colnames)
 
-# write dataframe to htseq directory:
-record_df.to_csv(htseq_dir + '/completion_record.tab', sep='\t')
+# write dataframe to record directory:
+print('')
+print('writing ' + record_dir + '/completion_record.tab')
+record_df.to_csv(record_dir + '/completion_record.tab', sep='\t')
 
 # drop all rows containing 'False' extremely inefficiently:
 record_df = record_df[record_df.rep != 'False']
@@ -135,7 +141,8 @@ record_df = record_df[record_df.gc_htseq != 'False']
 complete = list(record_df.index)
 
 # write list to file:
-compfile = open(htseq_dir + '/completed_files.txt', 'w')
+compfile = open(record_dir + '/completed_files.txt', 'w')
 for item in complete:
   compfile.write('%s\n' % item)
-
+print('')
+print('writing ' + record_dir + '/completed_files.txt')

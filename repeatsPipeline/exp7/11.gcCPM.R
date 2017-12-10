@@ -18,22 +18,22 @@ library(Rmisc)
 
 # define starting variables:
 project <- "hgsoc_repeats"
-expName <- "exp7"
-#sTypes <- c("AOCS_091_arPT", "AOCS_091_rcAF")
+expName <- "exp9"
+sTypes <- c("AOCS_091_arPT", "AOCS_091_rcAF")
+fTypes <- c("AOCS_091_acquired_resistant_tumour", "AOCS_091_recurrent_tumour_ascites_fluid")
 
 ######
 # test using other samples:
-sTypes <- c("AOCS_172_FT", "AOCS_075_prPT")
-fTypes <- c("AOCS_172_fallopian_tube_control", "AOCS_075_primary_resistant_tumour")
+#sTypes <- c("AOCS_172_FT", "AOCS_075_prPT")
+#fTypes <- c("AOCS_172_fallopian_tube_control", "AOCS_075_primary_resistant_tumour")
 ######
 
 Type <- "gc"
 ctls <- c("ENSG00000111640", "ENSG00000012048",
 	"ENSG00000156414", "ENSG00000187605",
-	"ENSG00000077800", "ENSG00000173809",
-	"ENSG00000105173")
+	"ENSG00000077800", "ENSG00000173809")
 names(ctls) <- c("GAPDH", "BRCA1", "TDRD9", "TET3",
-	"FKBP6", "TDRD12", "CCNE1")
+	"FKBP6", "TDRD12")
 
 # define directories:
 homeDir <- "/Users/jamestorpy/clusterHome/"
@@ -84,7 +84,7 @@ ctlCPM <- melt(ctlCPM, varnames = c("id", "sample"),
 colnames(ctlCPM)[2] <- "sample"
 
 ctlCPM <- ctlCPM[c(match(names(ctls), ctlCPM$id),
-	(match(names(ctls), ctlCPM$id))+7),]
+	(match(names(ctls), ctlCPM$id))+length(ctls)),]
 
 # relevel factors to put negative ctls first:
 ctlCPM$id <- factor(ctlCPM$id)

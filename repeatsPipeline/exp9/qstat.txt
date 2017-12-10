@@ -1,0 +1,17 @@
+ 724928 5.00500 tarFT1.tar jamtor       r     12/11/2017 08:33:40 long.q@omega-0-7.local             1        
+ 724932 5.00500 tarFT5.tar jamtor       r     12/11/2017 08:33:40 short.q@delta-5-3.local            1        
+ 724933 5.00500 tarFT6.tar jamtor       r     12/11/2017 08:33:40 short.q@delta-4-2.local            1        
+ 724935 5.00500 tarmrPT1.t jamtor       r     12/11/2017 08:33:40 short.q@omega-1-1.local            1        
+ 724936 5.00500 tarmrPT2.t jamtor       r     12/11/2017 08:33:40 short.q@omega-1-2.local            1        
+ 724937 5.00500 tarmrPT3.t jamtor       r     12/11/2017 08:33:40 short.q@delta-5-3.local            1        
+ 724939 5.00500 tarmrPT5.t jamtor       r     12/11/2017 08:33:40 short.q@omega-1-1.local            1        
+ 724940 5.00500 tarmrPT6.t jamtor       r     12/11/2017 08:33:40 short.q@delta-5-2.local            1        
+ 724941 5.00500 tarmrPT7.t jamtor       r     12/11/2017 08:33:40 short.q@omega-1-2.local            1        
+ 724942 5.00500 tarmrPT8.t jamtor       r     12/11/2017 08:33:40 short.q@delta-5-3.local            1        
+ 724943 5.00500 tarmsST1.t jamtor       r     12/11/2017 08:33:40 short.q@delta-4-2.local            1        
+ 724944 5.00500 tarmsST2.t jamtor       r     12/11/2017 08:33:40 short.q@omega-1-1.local            1        
+ 724945 5.00500 tarmsST3.t jamtor       r     12/11/2017 08:33:40 short.q@delta-4-1.local            1        
+ 724946 5.00500 tarmsST4.t jamtor       r     12/11/2017 08:33:40 short.q@omega-1-2.local            1        
+ 724947 5.00500 tarmsST5.t jamtor       r     12/11/2017 08:33:40 short.q@delta-5-2.local            1        
+ 724948 5.00500 tarpAF1.ta jamtor       r     12/11/2017 08:33:40 short.q@delta-5-3.local            1        
+ 724949 5.00500 QRLOGIN    jamtor       r     12/11/2017 08:35:41 x10.q@delta-4-4.local              1        

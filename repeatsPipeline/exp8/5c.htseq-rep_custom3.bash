@@ -2,39 +2,37 @@
 
 module load gi/boost/1.53.0
 
-numcores=4
+numcores=12
 
 # make directory hierachy
 projectname="hgsoc_repeats"
 samplename="GC"
-expName="exp8"
+expName="exp9"
 Type="custom3"
-draft=$2
 
 date
 
-homeDir="/share/ClusterShare/thingamajigs/jamtor/"
+homeDir="/share/ScratchGeneral/jamtor/"
 projectDir="$homeDir/projects/$projectname"
 resultsDir="$projectDir/RNA-seq/results"
-refDir="/share/ScratchGeneral/jamtor/projects/$projectname/RNA-seq/refs/$Type"
+refDir="/home/jamtor/repeats"
 
 # genome reference file
 genomeName="hg38_ercc"
-gtfFile="$refDir/human-89.repeats.htseq.gtf"
 
 # input/output directories
 inType="star"
 outType="htseq"
 
-inPath="$resultsDir/$inType/$samplename/$expName/$draft/"
-outPath="$resultsDir/$outType/$expName/$draft/"
+inPath="$resultsDir/$inType/$samplename/$expName/"
+outPath="$resultsDir/$outType/$expName/"
 
 # load in variable from calling script:
-uID=$1
+uID="prPT9"
 
 # scripts/log directory
 scriptsDir="$projectDir/RNA-seq/scripts/repeatsPipeline/$expName"
-logDir="$scriptsDir/logs"
+logDir="$projectDir/logs"
 mkdir -p $logDir
 
 echo -e
@@ -75,6 +73,8 @@ echo This is the htseq_line:
 echo $htseq_line
 echo -e
 
-htseq-count -f bam -i ID -t exon --stranded=no $inFile $gff >> $outDir/$uID.$Type.htseq.txt
+/opt/gridengine/bin/linux-x64/qsub -q short.q -N j5c_$uID -hold_jid 3c_$uID -b y -wd \
+/share/ClusterShare/thingamajigs/jamtor/projects/hgsoc_repeats/RNA-seq/logs/exp9 -j y -R y -pe smp $numcores -V \
+$htseq_line
 
 date

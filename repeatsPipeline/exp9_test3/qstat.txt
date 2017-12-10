@@ -1,0 +1,22 @@
+ 676125 2.05660 j4_prPT9   jamtor       r     11/22/2017 12:15:11 long.q@omega-1-8.local             6        
+ 676126 2.05660 j5_prPT9   jamtor       r     11/22/2017 12:15:11 long.q@omega-1-8.local             6        
+ 676127 2.05660 j6_prPT9   jamtor       r     11/22/2017 12:15:11 long.q@omega-1-8.local             6        
+ 676134 2.05660 j3_rfPT1   jamtor       r     11/22/2017 13:07:36 long.q@omega-0-7.local             6        
+ 676135 2.05660 j3_rfPT3   jamtor       r     11/22/2017 13:07:36 long.q@omega-0-7.local             6        
+ 676169 2.05635 j0_rfPT1   jamtor       r     11/22/2017 13:07:06 long.q@omega-0-7.local             2        
+ 676170 2.05635 j0_rfPT3   jamtor       r     11/22/2017 13:07:06 long.q@omega-1-8.local             2        
+ 676171 2.05635 j0_prPT11  jamtor       r     11/22/2017 13:07:06 long.q@omega-1-8.local             2        
+ 676172 2.05635 j0_prPT9   jamtor       r     11/22/2017 13:07:06 long.q@omega-1-8.local             2        
+ 676173 2.05635 j0_prPT10  jamtor       r     11/22/2017 13:07:06 long.q@omega-1-8.local             2        
+ 676174 2.05635 j0_pAF1    jamtor       r     11/22/2017 13:07:06 long.q@omega-1-8.local             2        
+ 676175 2.05635 j0_FT3     jamtor       r     11/22/2017 13:07:06 long.q@omega-1-8.local             2        
+ 676176 2.05635 j0_rcAF16  jamtor       r     11/22/2017 13:08:06 long.q@omega-1-8.local             2        
+ 676178 0.00000 j1_rfPT1   jamtor       hqw   11/22/2017 13:08:02                                    8        
+ 676179 0.00000 j2_rfPT1   jamtor       hqw   11/22/2017 13:08:02                                    6        
+ 676180 0.00000 j4_rfPT1   jamtor       hqw   11/22/2017 13:08:02                                    6        
+ 676181 0.00000 j5_rfPT1   jamtor       hqw   11/22/2017 13:08:02                                    6        
+ 676182 0.00000 j6_rfPT1   jamtor       hqw   11/22/2017 13:08:02                                    6        
+ 676183 0.00000 j2_rfPT3   jamtor       hqw   11/22/2017 13:08:02                                    6        
+ 676184 0.00000 j4_rfPT3   jamtor       hqw   11/22/2017 13:08:03                                    6        
+ 676185 0.00000 j5_rfPT3   jamtor       hqw   11/22/2017 13:08:03                                    6        
+ 676186 0.00000 j6_rfPT3   jamtor       hqw   11/22/2017 13:08:03                                    6        
