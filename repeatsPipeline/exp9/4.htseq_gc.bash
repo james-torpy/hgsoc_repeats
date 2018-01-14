@@ -5,12 +5,12 @@ echo "### 4.htseq_gc.bash ###"
 echo -e
 echo -e
 
+source /home/jamtor/.bashrc
+
 module load gi/boost/1.53.0
 module load gi/zlib/1.2.8
 module load phuluu/samtools/1.4
 module load borgue/HTSeq/0.6.1
-
-source /home/jamtor/.bashrc
 
 date
 

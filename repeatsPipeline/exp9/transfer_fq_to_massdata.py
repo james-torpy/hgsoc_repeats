@@ -11,6 +11,12 @@ import getpass
 import pexpect
 import sys
 
+# qsub line:
+# qsub -q short.q -N gctr -b y -wd \
+# /share/ClusterShare/thingamajigs/jamtor/projects/hgsoc_repeats/RNA-seq/logs/exp9 \
+# -j y -R y -pe smp 1 -V /share/ClusterShare/thingamajigs/jamtor/projects/hgsoc_repeats/RNA-seq/scripts/repeatsPipeline/exp9/transfer_fq_to_massdata.py
+
+
 os.system('source /home/jamtor/.bashrc')
 
 # make directory hierachy:
@@ -51,12 +57,14 @@ print('The script_dir is:')
 print(script_dir)
 
 for f in os.listdir(fq_dir):
-	print('')
-	print('Copying ' + f + ' to NCI short')
-	os.system('rsync -avPS ' + fq_dir + '/' + f + ' ' + nci_username + \
-		':' + nci_fq)
-
-	os.system(script_dir + '/transfer_fq_to_massdata.bash')
-	os.remove(fq_dir + '/' + f)
+	print(f)
+	if 'fastq.gz' in f:
+		print('')
+		print('Copying ' + f + ' to NCI short')
+		os.system('rsync -avPS ' + fq_dir + '/' + f + ' ' + nci_username + \
+			':' + nci_fq)
+	
+		os.system(script_dir + '/transfer_fq_to_massdata.bash')
+		os.remove(fq_dir + '/' + f)
 
 

@@ -22,16 +22,17 @@ expName <- "exp9"
 Type <- "custom3"
 
 # define directories:
-homeDir <- "/Users/jamestorpy/clusterHome/"
-#homeDir <- "/share/ScratchGeneral/jamtor/"
+#homeDir <- "/Users/jamestorpy/clusterHome/"
+homeDir <- "/share/ScratchGeneral/jamtor/"
 projectDir <- paste0(homeDir, "/projects/", project)
 resultsDir <- paste0(projectDir, "/RNA-seq/results")
 RobjectDir <- paste0(projectDir, "/RNA-seq/Robjects/",
   expName, "/")
 plotDir <- paste0(resultsDir, "/R/", expName,
-  "/plots/DEplots/")
+  "/plots/DEplots/FT_vs_prPT_and_rfPT/conf/")
 
 system(paste0("mkdir -p ", plotDir))
+system(paste0("mkdir -p ", RobjectDir))
 
 
 ### 1. Load in all counts ###
@@ -41,13 +42,7 @@ custom3Counts <- readRDS(paste0(RobjectDir, "/", Type,
 gcCounts <- readRDS(paste0(RobjectDir,
   "/gc_allcounts.htseq.rds"))
 
-STypes <- unique(
-  grep(
-    "id", gsub(
-      "^.*\\_", "", colnames(custom3Counts)
-    ), value=T, invert = T
-  )
-)
+STypes <- c("FT", "prPT")
 
 # append GCcountsDF to each GRanges object of custom1Counts:
 Counts <- rbind(custom3Counts, gcCounts)
@@ -60,8 +55,10 @@ storage.mode(Counts) <- "integer"
 Counts <- as.data.frame(Counts)
 rownames(Counts) <- Rnames
 
-# save Counts:
-saveRDS(Counts, file=paste0(RobjectDir, "/", Type, "_counts.RData"))
+# rename rfPT as prPT and select only FT and prPT:
+colnames(Counts) <- gsub("rfPT", "prPT", colnames(Counts))
+Counts <- Counts[,grep("FT|prPT", colnames(Counts))]
+
 
 ### 3. Perform pre-normalisation PCA and RLE plots ###
 
@@ -69,9 +66,11 @@ saveRDS(Counts, file=paste0(RobjectDir, "/", Type, "_counts.RData"))
 print(paste0("No. rows before filtering is: ", nrow(Counts)))
 Counts <- Counts %>%
   rownames_to_column('gene_id') %>%
-  dplyr::filter(rowSums(Counts > 5) >= (ncol(Counts)/3)) %>%
+  dplyr::filter(rowSums(Counts > 4) >= (ncol(Counts)/3)) %>%
   column_to_rownames('gene_id')
 print(paste0("No. rows after  filtering: ", nrow(Counts)))
+
+rowSums(Counts > 5)["ENSG00000142182"]
 
 # create pre-normalised PCA plot from counts and plot:
 Counts <- apply(Counts, 2, unlist)
@@ -84,10 +83,10 @@ if (ncol(Counts) > nrow(Counts)) {
 #if (file.exists(paste0(plotDir, "htseq_", Type, "_pcaCompsPrenormGC.pdf"))) {
 #  print(paste0(plotDir, "htseq_", Type, "_pcaCompsPrenormGC.pdf already exists, no need to create"))
 #} else {
-  print(paste0("Creating ", plotDir, "htseq_", Type, "_pcaCompsPrenormGC.pdf"))
-  pdf(file = paste0(plotDir, "htseq_", Type, "_pcaCompsPrenormGC.pdf"))
+  #print(paste0("Creating ", plotDir, "htseq_", Type, "_pcaCompsPrenormGC.pdf"))
+  #pdf(file = paste0(plotDir, "htseq_", Type, "_pcaCompsPrenormGC.pdf"))
   plot(pca)
-  dev.off()
+  #dev.off()
 #}
 
 splt <- unlist(lapply(split(colnames(Counts), gsub("^.*_*_", "", colnames(Counts))), length))
@@ -98,7 +97,7 @@ for (i in 1:length(splt)) {
     typeF <- c(typeF, rep(names(splt)[i], splt[i]))
   }
 }
-levels(typeF) <- c("FT", "prPT", "rfPT")
+levels(typeF) <- c("FT", "prPT")
 
 # convert matrix into SeqExpressionSet:
 set <- newSeqExpressionSet(Counts, phenoData = data.frame(typeF, row.names=colnames(Counts)))
@@ -109,9 +108,9 @@ set <- newSeqExpressionSet(Counts, phenoData = data.frame(typeF, row.names=colna
 #} else {
   print(paste0("Creating ", plotDir, "htseq_", Type, "_RLEPrenormGC.pdf"))
   par(mar=c(1,1,1,1))
-  pdf(file = paste0(plotDir, "htseq_", Type, "_RLEPrenormGC.pdf"))
+  #pdf(file = paste0(plotDir, "htseq_", Type, "_RLEPrenormGC.pdf"))
   plotRLE(set)
-  dev.off()
+  #dev.off()
 #}
 
 # create RUVseq pre-norm PCA:
@@ -119,9 +118,9 @@ set <- newSeqExpressionSet(Counts, phenoData = data.frame(typeF, row.names=colna
 #  print(paste0(plotDir, "htseq_", Type, "_pcaPrenormGC.pdf already exists, no need to create"))
 #} else {
   print(paste0("Creating ", plotDir, "htseq_", Type, "_pcaPrenormGC.pdf"))
-  pdf(file = paste0(plotDir, "htseq_", Type, "_pcaPrenormGC.pdf"), height = 10, width = 12)
+  #pdf(file = paste0(plotDir, "htseq_", Type, "_pcaPrenormGC.pdf"), height = 10, width = 12)
   plotPCA(set, cex=0.7)
-  dev.off()
+  #dev.off()
 #}
 
 
@@ -129,13 +128,13 @@ set <- newSeqExpressionSet(Counts, phenoData = data.frame(typeF, row.names=colna
 
 # perform between lane full normalisation:
 nSet <- betweenLaneNormalization(set, which="full")
-pdf(file = paste0(plotDir, "htseq_", Type, "_RLElaneNormGC.pdf"))
+#pdf(file = paste0(plotDir, "htseq_", Type, "_RLElaneNormGC.pdf"))
 plotRLE(nSet, outline=FALSE, ylim=c(-4, 4))
-dev.off()
+#dev.off()
 
-pdf(file = paste0(plotDir, "htseq_c_pcalaneNormGC.pdf"), height = 15, width = 20)
+#pdf(file = paste0(plotDir, "htseq_c_pcalaneNormGC.pdf"), height = 15, width = 20)
 plotPCA(nSet, cex=0.7)
-dev.off()
+#dev.off()
 
 
 ### 5. Perform differential expression comparing normalised FT controls to cancer samples ###
@@ -148,9 +147,9 @@ design <- model.matrix(~0+typeF, data=pData(nSet))
 y <- DGEList(counts=counts(nSet), group=typeF)
 
 # create MDS plot:
-pdf(file = paste0(plotDir, Type, "_mdslaneNormGC.pdf"), height = 15, width = 20)
+#pdf(file = paste0(plotDir, Type, "_mdslaneNormGC.pdf"), height = 15, width = 20)
 plotMDS(y)
-dev.off()
+#dev.off()
 
 
 # calculate the deviance residuals from a first-pass GLM regression of the counts on the co-variates 	of interest (p8 RUVseq manual):
@@ -216,6 +215,15 @@ for (i in 1:length(STypes)) {
     rownames(posGenes) <- c("CD47", "CCNE1")
     rownames(negGenes) <- c("beta-actin", "ABCF1",   "OAZ1", "RPLP0")
     
+    # include other genes of interest:
+    intrGenes <- rbind(allGenes["ENSG00000130816",], allGenes["ENSG00000119772",], allGenes["ENSG00000088305",], 
+                       allGenes["ENSG00000142182",], allGenes["ENSG00000276043",], allGenes["ENSG00000138336",], 
+                       allGenes["ENSG00000168769",], allGenes["ENSG00000187605",], allGenes["ENSG00000100697",],  
+                       allGenes["ENSG00000092847",], allGenes["ENSG00000123908",],  allGenes["ENSG00000126070",], 
+                       allGenes["ENSG00000134698",], allGenes["ENSG00000101945",])
+    rownames(intrGenes) <- c("DNMT1", "DNMT3A", "DNMT3B", "DNMT3L", "UHRF1", "TET1", "TET2", "TET3", "Dicer", "AGO1", 
+                            "AGO2", "AGO3", "AGO4", "SUV39H1")
+    
     posGenes$threshold <- "POSITIVE"
     if (nrow(posGenes[posGenes$FDR<thresh,])>0) {
       posGenes[posGenes$FDR<thresh,]$threshold <- "POSSIG"
@@ -226,8 +234,21 @@ for (i in 1:length(STypes)) {
       negGenes[negGenes$FDR<thresh,]$threshold <- "NEGSIG"
     }
     
-    lab <- rbind(rbind(sig, posGenes), negGenes)
-    repGenes <- rbind(rbind(repGenes, posGenes), negGenes)
+    intrGenes$threshold = "INTEREST"
+    
+    lab <- rbind(
+      intrGenes, rbind(
+        rbind(sig, posGenes), negGenes
+      )
+    )
+    repGenes <- rbind(
+      intrGenes, rbind(
+        rbind(
+          repGenes, posGenes
+        ),
+        negGenes
+      )
+    )
     lab$genes <- rownames(lab)
     
     if (i==2) {
@@ -247,7 +268,7 @@ for (i in 1:length(STypes)) {
     p <- p + geom_text_repel(data=lab, aes(label=genes))
     p <- p + theme(legend.position = "none")
     p <- p + labs(x="log2 fold change vs FT control", y="-log10   FDR")
-    p <- p +  xlim(c(-7, 7))
+    p <- p +  xlim(c(-4, 4))
     #if (file.exists(paste0(plotDir, "/", Type,  "_volcano_FDR", thresh, comp, ".pdf"))) {
     #  print(paste0(plotDir, "/", Type,  "_volcano_FDR", thresh, comp, ".pdf"))
     #  p
@@ -255,7 +276,7 @@ for (i in 1:length(STypes)) {
       print(paste0("Creating ",plotDir, "/", Type,  "_volcano_FDR", thresh, comp, ".pdf"))
       pdf(file = paste0(plotDir, "/", Type,  "_volcano_FDR", thresh, comp, ".pdf"))
       print(p)
-      dev.off()
+      #dev.off()
     #}
     
     ### 6. Calculate differential expression values with FDR and FC thresholds ###
@@ -286,11 +307,20 @@ for (i in 1:length(STypes)) {
     # include the control genes for labelling:
     # add positive and negative control genes CD47, CCNE1,  GAPDH, b-actin:
     
-    posGenes <- rbind(allGenes["ENSG00000091831",],   allGenes["ENSG00000196776",],   allGenes["ENSG00000105173",])
-    negGenes <- rbind(allGenes["ENSG00000111640",],   allGenes["ENSG00000075624",],   allGenes["ENSG00000204574",],
-                      allGenes["ENSG00000104904",],   allGenes["ENSG00000089157",])
-    rownames(posGenes) <- c("ESR1", "CD47", "CCNE1")
-    rownames(negGenes) <- c("GAPDH", "beta-actin", "ABCF1",   "OAZ1", "RPLP0")
+    posGenes <- rbind(allGenes["ENSG00000196776",],   allGenes["ENSG00000105173",])
+    negGenes <- rbind(allGenes["ENSG00000075624",],   allGenes["ENSG00000104904",])
+    rownames(posGenes) <- c("CD47", "CCNE1")
+    rownames(negGenes) <- c("beta-actin", "OAZ1")
+    
+    # include other genes of interest:
+    intrGenes <- rbind(allGenes["ENSG00000130816",], allGenes["ENSG00000119772",], allGenes["ENSG00000088305",], 
+                       allGenes["ENSG00000142182",], allGenes["ENSG00000276043",], allGenes["ENSG00000138336",], 
+                       allGenes["ENSG00000168769",], allGenes["ENSG00000187605",], allGenes["ENSG00000100697",],  
+                       allGenes["ENSG00000092847",], allGenes["ENSG00000123908",],  allGenes["ENSG00000126070",], 
+                       allGenes["ENSG00000134698",], allGenes["ENSG00000101945",])
+    
+    rownames(intrGenes) <- c("DNMT1", "DNMT3A", "DNMT3B", "DNMT3L", "UHRF1", "TET1", "TET2", "TET3", "Dicer", "AGO1", 
+                            "AGO2", "AGO3", "AGO4", "SUV39H1")
     
     posGenes$threshold <- "POSITIVE"
     if (nrow(posGenes[posGenes$FDR<thresh,])>0) {
@@ -302,8 +332,21 @@ for (i in 1:length(STypes)) {
       negGenes[negGenes$FDR<thresh,]$threshold <- "NEGSIG"
     }
     
-    lab <- rbind(rbind(sig, posGenes), negGenes)
-    repGenes <- rbind(rbind(repGenes, posGenes), negGenes)
+    intrGenes$threshold = "INTEREST"
+    
+    lab <- rbind(
+      intrGenes, rbind(
+        rbind(sig, posGenes), negGenes
+      )
+    )
+    repGenes <- rbind(
+      intrGenes, rbind(
+        rbind(
+          repGenes, posGenes
+        ),
+        negGenes
+      )
+    )
     lab$genes <- rownames(lab)
     
     
@@ -312,14 +355,14 @@ for (i in 1:length(STypes)) {
     p <- p + geom_text_repel(data=lab, aes(label=genes))
     p <- p + theme(legend.position = "none")
     p <- p + labs(x="log2 fold change vs FT control", y="-log10   FDR")
-    p <- p +  xlim(c(-7, 7))
+    p <- p +  xlim(c(-4, 4))
     #if (file.exists(paste0(plotDir, "/", Type,  "_volcano_FDR", thresh, "_logFC", FCthresh, "_", comp,  ".pdf"))) {
     #  print(paste0(plotDir, "/", Type,  "_volcano_FDR", thresh, "_logFC", FCthresh, "_", comp, ".pdf"))
     #  p
     #} else {
       print(paste0("Creating ",plotDir, "/", Type,  "_volcano_FDR", thresh, "_logFC", FCthresh, "_", comp,  ".pdf"))
       pdf(file = paste0(plotDir, "/", Type,  "_volcano_FDR", thresh, "_logFC", FCthresh, "_", comp, ".pdf"))
-      print(p)
+      p
       dev.off()
     #}
     
@@ -331,7 +374,8 @@ for (i in 1:length(STypes)) {
 names(allReps) <- paste0("FT_vs_", STypes[-1])
 names(sigReps) <- paste0("FT_vs_", STypes[-1])
 
-saveRDS(allReps, file=paste0(RobjectDir, "/", Type, "_DEreps.rds"))
+saveRDS(rownames(sigReps[[1]]), paste0(RobjectDir, "/sigReps_pvalue_", thresh, "_FC_", FCthresh, ".rds"))
+
 
 # don't just want significant genes for each individual group, so find names of
 # all the sig genes from all groups by taking the rownames and unlisting into one vector:

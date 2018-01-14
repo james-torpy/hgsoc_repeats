@@ -37,19 +37,19 @@ names(ctls) <- c("GAPDH", "BRCA1", "TDRD9", "TET3",
 	"FKBP6", "TDRD12")
 
 # define directories:
-homeDir <- "/Users/jamestorpy/clusterHome/"
-#homeDir <- "/share/ScratchGeneral/jamtor/"
+#homeDir <- "/Users/jamestorpy/clusterHome/"
+homeDir <- "/share/ScratchGeneral/jamtor/"
 projectDir <- paste0(homeDir, "/projects/", project)
 resultsDir <- paste0(projectDir, "/RNA-seq/results")
 RobjectDir <- paste0(projectDir, "/RNA-seq/Robjects/",
 	expName, "/")
 plotDir <- paste0(resultsDir, "/R/", expName,
-	"/plots/arPT5_vs_rcAF6/")
+	"/plots/conf/arPT5_vs_rcAF6/")
 
 system(paste0("mkdir -p ", plotDir))
 
 
-### 1. Load in all counts ###
+### 1. Load in gc counts ###
 
 Counts <- readRDS(paste0(RobjectDir,
 	"/gc_allcounts.htseq.rds"))

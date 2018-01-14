@@ -5,12 +5,18 @@
 # This script tars and moves any star gc file directories to
 # mass data on NCI and removes the original files
 
+# qsub line:
+# qsub -q short.q -N gctr -b y -wd \
+# /share/ClusterShare/thingamajigs/jamtor/projects/hgsoc_repeats/RNA-seq/logs/exp9 \
+# -j y -R y -pe smp 1 -V /share/ClusterShare/thingamajigs/jamtor/projects/hgsoc_repeats/RNA-seq/scripts/repeatsPipeline/exp9/transfer_gc_to_massdata.py
+
 import os
 import glob
 import getpass
 import pexpect
 import sys
 import shutil
+import re
 
 os.system('source /home/jamtor/.bashrc')
 
@@ -28,7 +34,7 @@ home_dir2 = '/share/ClusterShare/thingamajigs/jamtor'
 project_dir = home_dir + '/projects/' + projectname + '/RNA-seq/'
 results_dir = project_dir + '/results/'
 
-gc_dir = results_dir + '/star/GC/' + exp_name
+gc_dir = results_dir + '/star/GC/' + exp_name + '/' 
 print('')
 print('This is the gc_dir:')
 print(gc_dir)
@@ -51,51 +57,38 @@ print('')
 print('The script_dir is:')
 print(script_dir)
 
+# define files as those that match the regex pattern specified:
+files = os.listdir(gc_dir)
+
+reg = re.compile('.*[A-Z][A-Z].*[0-9]$')
+selected_files = filter(reg.search, files)
+
 files = []
-for f in os.listdir(gc_dir):
-	if 'Store' not in f and 'copy' not in f and 'logs' not in f and \
-		'.tar.gz' not in f:
-		files.append(f)
+for f in selected_files:
+	files.append(f)
 
-#f = files[1]
-#print('')
-#print('Copying ' + f + ' log file to log directory')
-#os.system('mkdir ' + gc_dir + '/logs/' + f)
-#os.system('cp ' + gc_dir + '/' + f + '/Log.final.out ' + gc_dir + \
-#	'/logs/' + f + '/')
-#
-#print('')
-#print('Tarring ' + f)
-#os.system('tar -zcvf ' + gc_dir + '/' + f + '.tar.gz ' + gc_dir + '/' + f)
-#print('')
-#print('Removing original directory ' + f)
-#shutil.rmtree(gc_dir + '/' + f)
-#print('')
-#print('Copying ' + gc_dir + '/' + f + '.tar.gz to NCI short')
-#os.system('rsync -avPS ' + gc_dir + '/' + f + '.tar.gz ' + nci_username + \
-#	':' + nci_gc)
-#os.system(script_dir + '/transfer_gc_to_massdata.bash')
-#os.remove(gc_dir + '/' + f + '.tar.gz')
+print('Files are: ' + str(files))
 
+# copy logs of each sample to separate log directory:
 for f in files:
 	print('')
 	print('Copying ' + f + ' log file to log directory')
-	os.system('mkdir ' + gc_dir + '/logs/' + f)
+	os.system('mkdir -p ' + gc_dir + '/logs/' + f)
 	os.system('cp ' + gc_dir + '/' + f + '/Log.final.out ' + gc_dir + \
 		'/logs/' + f + '/')
-	
-	print('')
-	print('Tarring ' + f)
-	os.system('tar -zcvf ' + gc_dir + '/' + f + '.tar.gz ' + gc_dir + '/' + f)
-	print('')
-	print('Removing original directory ' + f)
-	shutil.rmtree(gc_dir + '/' + f)
-	print('')
-	print('Copying ' + gc_dir + '/' + f + '.tar.gz to NCI short')
-	os.system('rsync -avPS ' + gc_dir + '/' + f + '.tar.gz ' + nci_username + \
-		':' + nci_gc)
-	os.system(script_dir + '/transfer_gc_to_massdata.bash')
-	os.remove(gc_dir + '/' + f + '.tar.gz')
-
-
-
+	# if bam file exists, tar its directory, submit it to
+	# transfer_gc_to_massdata.bash and remove the original directory:
+	if os.path.isfile(gc_dir + '/' + f + '/Aligned.novosortedByName.out.bam'):
+		print('')
+		print('Tarring ' + f)
+		os.system('tar -zcvf ' + gc_dir + '/' + f + '.tar.gz ' + gc_dir + '/' + f)
+		if os.path.isfile(gc_dir + '/' + f + '.tar.gz'):
+			print('')
+			print('Removing original directory ' + f)
+			shutil.rmtree(gc_dir + '/' + f)
+			print('')
+			print('Copying ' + gc_dir + '/' + f + '.tar.gz to NCI short')
+			os.system('rsync -avPS ' + gc_dir + '/' + f + '.tar.gz ' + nci_username + \
+				':' + nci_gc)
+			os.system(script_dir + '/transfer_gc_to_massdata.bash')
+			os.remove(gc_dir + '/' + f + '.tar.gz')

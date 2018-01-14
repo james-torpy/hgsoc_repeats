@@ -44,7 +44,7 @@ for f in listdir(report_dir):
 
 ribo = []
 for d in listdir(ribo_dir):
-	if 'subset' not in d and '.2' not in d:
+	if 'subset' not in d and '.2' not in d and 'log' not in d:
 		ribo.append(d)
 
 
@@ -63,14 +63,17 @@ gc_htseq=[]
 
 for f in os.walk(htseq_dir):
 	for x in f[2]:
+		uniq = re.sub('\\..*$', '', x)
 		if 'htseq' in x and 'subset' not in x and '.2' not in x:
-			print(x)
-			if 'all' in x:
-				all_htseq.append(re.sub('\.all.htseq.txt$', '', x))
-			elif 'custom3' in x:
-				custom3_htseq.append(re.sub('\.custom3.htseq.txt$', '', x))
-			elif 'gc' in x:
-				gc_htseq.append(re.sub('\.gc.htseq.txt$', '', x))
+			if os.path.isfile(htseq_dir + '/' + uniq + '/' + x):
+				if os.path.getsize(htseq_dir + '/' + uniq + '/' + x) > 0:
+					print(x)
+					if 'all' in x:
+						all_htseq.append(re.sub('\.all.htseq.txt$', '', x))
+					elif 'custom3' in x:
+						custom3_htseq.append(re.sub('\.custom3.htseq.txt$', '', x))
+					elif 'gc' in x:
+						gc_htseq.append(re.sub('\.gc.htseq.txt$', '', x))
 
 
 ### 5. Create empty data frame for each sample ###

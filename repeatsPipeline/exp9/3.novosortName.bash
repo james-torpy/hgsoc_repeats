@@ -5,6 +5,8 @@ echo -e
 echo "### 3c.novosortCoord.bash ###"
 echo -e
 
+source /home/jamtor/.bashrc
+
 module load gi/zlib/1.2.8
 module load phuluu/samtools/1.4
 module load gi/novosort/precompiled/1.03.08

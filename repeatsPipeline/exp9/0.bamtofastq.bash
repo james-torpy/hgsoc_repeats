@@ -5,6 +5,8 @@
 # Takes paired read bam files and converts them to fastq files, one for 1st
 # paired reads, one for 2nd paired reads, and two for unpaired reads
 
+source /home/jamtor/.bashrc
+
 module load gi/zlib/1.2.8
 module load phuluu/samtools/1.4
 

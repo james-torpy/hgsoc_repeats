@@ -7,6 +7,8 @@ echo -e
 
 date
 
+source /home/jamtor/.bashrc
+
 module load gi/zlib/1.2.8
 module load phuluu/samtools/1.4
 

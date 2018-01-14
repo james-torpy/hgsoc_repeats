@@ -26,10 +26,10 @@ os.system('module load phuluu/samtools/1.4')
 projectname = 'hgsoc_repeats'
 sample_type = 'fullsamples/bowtell_primary'
 exp_name = 'exp9'
-total_no_jobs = 7
+total_no_jobs = 3
 q = 'short'
-upper_core_lim = 48
-lower_core_lim = 48
+upper_core_lim = 200
+lower_core_lim = 190
 
 # home_dir is where input/intermediate files are located:
 home_dir = '/share/ScratchGeneral/jamtor/'
@@ -122,13 +122,13 @@ with open(script_dir + '/qstat_cores.txt') as f:
         slots = slots + int(re.sub('\\n', '', line))
 
 # if too many cores are being used, remove all but running jobs:
-if slots > upper_core_lim:
-    print('Too many cores being used, removing all except first 8 jobs')
-    qstat = pd.read_csv(script_dir + '/qstat.txt', header = None)
-    for line in qstat[8:].iterrows():
-        j_id = str.split(str(line[1]))[1]
-        print(j_id)
-        os.system('qdel ' + j_id)
+#if slots > upper_core_lim:
+#    print('Too many cores being used, removing all except first 9 jobs')
+#    qstat = pd.read_csv(script_dir + '/qstat.txt', header = None)
+#    for line in qstat[9:].iterrows():
+#        j_id = str.split(str(line[1]))[1]
+#        print(j_id)
+#        os.system('qdel ' + j_id)
 
 # create list of jobs currently running or queued in qstat:
 running_jobs = []
@@ -177,7 +177,7 @@ if slots < lower_core_lim:
         # remove whitespace characters like `\n` at the end of each line
         done_ids = [x.strip() for x in done_ids]
         print('')
-        print(done_ids)
+        print('The following jobs are done: ' + str(done_ids))
     else:
         done_ids = []
 
@@ -185,7 +185,7 @@ if slots < lower_core_lim:
     ### 4. Define specific job parameters for each sample ###
     
     # read in raw files and fetch ids:
-    in_files = glob.glob(raw_dir + '*.bam')
+    in_files = glob.glob(gc_dir + '/**/*.bam')
     #in_files.extend(glob.glob(raw_dir + 'FT[1-7].bam'))
 	#in_files.extend(glob.glob(raw_dir + 'prPT1[2-7].bam'))
 	#in_files.extend(glob.glob(raw_dir + 'rfPT[1-9].bam'))
@@ -196,7 +196,8 @@ if slots < lower_core_lim:
 	#in_files.extend(glob.glob(raw_dir + 'erPT[1-8].bam'))
     #in_files = [raw_dir + '/prPT9.bam', raw_dir + '/prPT10.bam', raw_dir \
     #+ '/prPT11.bam', raw_dir + '/rcAF16.bam']
-    #in_files = [raw_dir + '/rcAF16.bam']
+    #in_files = [gc_dir + '/FT2/Aligned.novosortedByName.out.bam']
+    print(in_files)
     
     for infile in in_files:
         if slots < lower_core_lim:
@@ -204,7 +205,9 @@ if slots < lower_core_lim:
             print('')
             print('The infile is ' + infile)
             u_id = re.sub(
-                '.bam', '', os.path.basename(infile)
+                '^.*/' + exp_name + '/', '', re.sub(
+                    '/Aligned.novosortedByName.out.bam', '', infile
+                )
             )
             print('')
             print('The u_id is: ' + u_id)
@@ -215,34 +218,34 @@ if slots < lower_core_lim:
                 ### Job 0 inputs ###
                 # count gc genes from bam using htseq #
                 
-                cores.append('6')
+                cores = ['6']
                 
-                inputs1.append(gc_dir + '/' + u_id + '/Aligned.novosortedByName.out.bam')
-                inputs2.append('none')
-                inputs3.append('none')
-                inputs4.append('none')
+                inputs1 = [gc_dir + '/' + u_id + '/Aligned.novosortedByName.out.bam']
+                inputs2 = ['none']
+                inputs3 = ['none']
+                inputs4 = ['none']
                 
-                outputs1.append(htseq_dir + '/' + u_id + '/' + u_id + '.gc.htseq.txt')
-                outputs2.append('none')
-                outputs3.append('none')
-                outputs4.append('none')
-                outputs5.append('none')
+                outputs1 = [htseq_dir + '/' + u_id + '/' + u_id + '.gc.htseq.txt']
+                outputs2 = ['none']
+                outputs3 = ['none']
+                outputs4 = ['none']
+                outputs5 = ['none']
         
-                extra_params.append('none')
+                extra_params = ['none']
         
-                scripts.append(script_dir + '/4.htseq_gc.bash')
+                scripts = [script_dir + '/4.htseq_gc.bash']
                 
-                qsub_params.append('none')
+                qsub_params = ['none']
         
-                dependent_job.append('j3')
+                dependent_job = ['j3']
         
                 # define the minimum size the output files should be before
                 # the job is accepted as complete
-                min_output_size1.append(2000)
-                min_output_size2.append('none')
-                min_output_size3.append('none')
-                min_output_size4.append('none')
-                min_output_size5.append('none')
+                min_output_size1 = [2000]
+                min_output_size2 = ['none']
+                min_output_size3 = ['none']
+                min_output_size4 = ['none']
+                min_output_size5 = ['none']
         
         
                 ### Job 1 inputs ###
@@ -279,7 +282,7 @@ if slots < lower_core_lim:
         
         
                 ### Job 2 inputs ###
-                # count all reduced repeat regions from bam using htseq #
+                # count custom3 repeat regions from bam using htseq #
                 
                 cores.append('6')
                 
@@ -378,7 +381,7 @@ if slots < lower_core_lim:
                               + ' -b y -wd ' \
                               + log_dir \
                               + ' -j y -R y ' \
-                              + '-P DSGClinicalGenomics -pe smp ' + cores[i] + ' ' \
+                              + '-pe smp ' + cores[i] + ' ' \
                               + qsub_params[i] \
                               + ' -V ' + scripts[i] + ' ' \
                               + cores[i] + ' ' \
@@ -474,8 +477,19 @@ if slots < lower_core_lim:
                                       + ' -b y -wd ' \
                                       + log_dir \
                                       + ' -j y -R y ' \
-                                      + '-P DSGClinicalGenomics -pe smp ' + rm_cores
+                                      + '-pe smp ' + rm_cores
                                       + ' -V ' + rm_script + ' ' \
                                       + rm + ' ' + u_id + ' ' + script_dir
                                     )
     print(in_files)
+
+if slots > upper_core_lim:
+    print('Too many cores being used, removing all except first 9 jobs')
+
+if slots < lower_core_lim:
+	print('')
+	print('Less than ' + str(lower_core_lim) + ' cores being used! Submitting more jobs...')
+
+print('')
+print('The log_dir is:')
+print(log_dir)

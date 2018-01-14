@@ -1,4 +1,4 @@
-### 5.HGSOC_CPMRs.R ###
+### CPMRheatmap.R ###
 
 # This script takes a list of dfs of different classes and types of repeat counts for
 # primary resistant and FT control RNA-seq data sets and calculates CPMRs:
@@ -14,6 +14,7 @@ library(RUVSeq)
 library(ggplot2)
 library(ggrepel)
 library(preprocessCore)
+library(pheatmap)
 
 # define starting variables:
 project <- "hgsoc_repeats"
@@ -26,7 +27,7 @@ homeDir <- "/Users/jamestorpy/clusterHome/"
 #homeDir <- "/share/ScratchGeneral/jamtor/"
 projectDir <- paste0(homeDir, "/projects/", project)
 resultsDir <- paste0(projectDir, "/RNA-seq/results")
-RobjectDir <- "/Users/jamestorpy/clusterHome//projects/hgsoc_repeats/RNA-seq/Robjects/exp9/"
+RobjectDir <- paste0(projectDir, "/RNA-seq/Robjects/", expName, "/")
 plotDir <- paste0(resultsDir, "/R/", expName,
                   "/plots/DEplots/")
 
@@ -50,10 +51,12 @@ STypes <- unique(
   )
 )
 
-#sigReps <- readRDS(paste0(RobjectDir, "/sigReps_pvalue_0.01_FC_1.rds"))
-sigReps <- c("(CATTC)n", "HSAT5", "Helitron1Na_Mam", "Helitron1Nb_Mam", "L1P5", "GSATX", "GSAT","HSATII", "ACRO1")
-
-Counts <- Counts[sigReps,]
+# define repeat species of heatmap as those with FDR<0.05 and FC>1 in any sample comparison with controls
+sigReps <- readRDS(file=paste0(RobjectDir, "/", Type, "_DEsigReps.rds"))
+#sigReps <- c("(CATTC)n", "Helitron1Na_Mam", "Helitron1Nb_Mam", "L1HS", "L1MD3", "L1P2", "L1P4d", "L1PA2", 
+#             "AluYi6", "GSATX", "GSAT","HSATII", "HSAT4", "HSAT5", "ACRO1", "FAM", "REP522", "CER", "SATR2")
+sigRepNames <- rownames(sigReps[[1]])
+Counts <- Counts[sigRepNames,]
 
 
 ### 2. Calculate CPMRs ###
@@ -67,9 +70,36 @@ CPMR <- as.data.frame(t(t(Counts)/rSizes)*1000000)
 # log CPMRs:
 logCPMR = log10(CPMR+1)
 
-### 3. Create logFC and FDR heatmaps:
 
-pheatmap(logCPMR, fontsize = 7, cluster_cols = F)
+### 3. Create logFC and FDR heatmaps:
+p <- pheatmap(logCPMR, fontsize = 7, cluster_cols = F)
+
+pdf(paste0(plotDir, "/repeatLogCPMRhmap.pdf"))
+p
+dev.off()
+
+# fetch clusters:
+logCPMRclust <- cbind(logCPMR, 
+                   cluster = cutree(p$tree_row, 
+                                    k = 4))
+for (i in 1:4) {
+  if (i==1) {
+    clusters <- list(logCPMRclust[logCPMRclust$cluster==i,])
+    df <- subset(clusters[[i]], select=-cluster)
+    pdf(paste0(plotDir, "/repeatLogCPMRhmap", as.character(i), ".pdf"))
+    pheatmap(df, fontsize = 7, cluster_cols = F)
+    dev.off()
+  } else {
+    clusters[[i]] <- logCPMRclust[logCPMRclust$cluster==i,]
+    df <- subset(clusters[[i]], select=-cluster)
+    pdf(paste0(plotDir, "/repeatLogCPMRhmap", as.character(i), ".pdf"))
+    pheatmap(df, fontsize = 7, cluster_cols = F)
+    dev.off()
+  }
+}
+
+######
+
 
 #colnames(fcDF) <- c("acquired_resistance", "extreme_response", "multiple_response", "metastatic", "primary_ascites", "primary_resistant", "refractory_ascites", "refractory")
 Names <- gsub(

@@ -6,7 +6,7 @@ library(pheatmap)
 
 # define starting variables:
 project <- "hgsoc_repeats"
-expName <- "exp7"
+expName <- "exp9"
 STypes <- c("FT", "prPT", "rfPT")
 #HGSOCtypes <- c("primary_resistant", "primary_refractory")
 annot <- "custom3"
@@ -18,7 +18,8 @@ homeDir <- "/Users/jamestorpy/clusterHome/"
 #homeDir <- "/Users/jamestorpy/Documents/Garvan/phd"
 projectDir <- paste0(homeDir, "/projects/", project)
 resultsDir <- paste0(projectDir, "/RNA-seq/results")
-RobjectDir <- paste0(projectDir, "/RNA-seq/Robjects/", expName, "/test/", groupage, "/")
+#RobjectDir <- paste0(projectDir, "/RNA-seq/Robjects/", expName, "/test/", groupage, "/")
+RobjectDir <- paste0(projectDir, "/RNA-seq/Robjects/", expName, "/")
 plotDir <- paste0(resultsDir, "/R/", expName, "/plots/DEplots/test/",  groupage, "/")
 
 system(paste0("mkdir -p ", plotDir))
@@ -27,7 +28,6 @@ system(paste0("mkdir -p ", plotDir))
 ### 1. Load in inputs ###
 
 allGene <- readRDS(file=paste0(RobjectDir, "/", annot, "_DEsigReps.rds"))
-
 
 ### 2. Fetch vector of all, top and str genes: ###
 
@@ -47,7 +47,9 @@ names(allFC)[3] <- "logFC"
 fcDF <- dcast(allFC, repeat_id ~ sample)
 rownames(fcDF) <- fcDF$repeat_id
 fcDF <- subset(fcDF, select=-repeat_id)
-#pheatmap(fcDF, fontsize = 7)
+pdf(file=paste0(plotDir, "/log2FC_heatmap.pdf"), width=10, height=10)
+pheatmap(fcDF, fontsize = 7)
+dev.off()
 
 allFDR <- do.call("rbind", allGene)
 allFDR$sample <- gsub("\\..*$", "", rownames(allFDR))
@@ -60,13 +62,18 @@ names(allFDR)[3] <- "FDR"
 fdrDF <- dcast(allFDR, repeat_id ~ sample)
 rownames(fdrDF) <- fdrDF$repeat_id
 fdrDF <- subset(fdrDF, select=-repeat_id)
-#pheatmap(fdrDF, fontsize = 7)
+pdf(file=paste0(plotDir, "/log2FDR_heatmap.pdf"), width=10, height=10)
+pheatmap(fdrDF, fontsize = 7)
+dev.off()
+
 
 #colnames(fcDF) <- c("acquired_resistance", "extreme_response", "multiple_response", "metastatic", "primary_ascites", "primary_resistant", "refractory_ascites", "refractory")
 Names <- gsub(
   "FT_vs_", "", gsub(
     "prPT", "primary_resistant", gsub(
-      "rfPT", "primary_refractory", gsub("typeF", "", colnames(fcDF))
+      "rfPT", "primary_refractory", gsub(
+        "typeF", "", colnames(fcDF)
+       )
      )
   )
 )

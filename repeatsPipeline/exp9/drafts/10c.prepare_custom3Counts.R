@@ -8,8 +8,8 @@ expName <- "exp9"
 Type <- "custom3"
 
 # define directories:
-homeDir <- "/share/ScratchGeneral/jamtor/"
-#homeDir <- "/Users/jamestorpy/clusterHome"
+#homeDir <- "/share/ScratchGeneral/jamtor/"
+homeDir <- "/Users/jamestorpy/clusterHome"
 projectDir <- paste0(homeDir, "/projects/", project, "/")
 resultsDir <- paste0(projectDir, "/RNA-seq/results/")
 RobjectDir <- paste0(projectDir, "/RNA-seq/Robjects/", expName, "/")

@@ -28,8 +28,8 @@ sample_type = 'fullsamples/bowtell_primary'
 exp_name = 'exp9'
 total_no_jobs = 7
 q = 'short'
-upper_core_lim = 48
-lower_core_lim = 48
+upper_core_lim = 200
+lower_core_lim = 200
 
 # home_dir is where input/intermediate files are located:
 home_dir = '/share/ScratchGeneral/jamtor/'
@@ -510,7 +510,7 @@ if slots < lower_core_lim:
                               + ' -b y -wd ' \
                               + log_dir \
                               + ' -j y -R y ' \
-                              + '-P DSGClinicalGenomics -pe smp ' + cores[i] + ' ' \
+                              + '-pe smp ' + cores[i] + ' ' \
                               + qsub_params[i] \
                               + ' -V ' + scripts[i] + ' ' \
                               + cores[i] + ' ' \
@@ -525,6 +525,9 @@ if slots < lower_core_lim:
                     if not all([os.path.isfile(inp) for inp in inputs]):
                         print('At least one job ' + str(i) + ' input file does not exist, holding job')
         
+                    elif 'j' + str(i) + '_' + u_id in qstat_jobs:
+                        os.system('echo Job ' + str(i) + ' is currently running or queued, no need to run again')
+
                     elif all([os.path.isfile(inp) for inp in inputs]) and not all([os.path.isfile(outp) \
                     	for outp in outputs]) and not 'j' + str(i) + '_' + u_id in qstat_jobs:
                         print('Submitting job ' + str(i) + ' with input/s or in dir/s:')
@@ -560,10 +563,7 @@ if slots < lower_core_lim:
         
                     elif all([os.path.isfile(outp) for outp in outputs]) and size_pass == True:
                         print('Job ' + str(i) + ' has previously been completed, no need to run')
-                    
-                    elif 'j' + str(i) + '_' + u_id in qstat_jobs:
-                        os.system('echo Job ' + str(i) + ' is currently running or queued, no need to run again')
-        
+                            
         
                 ### 6. Remove files no longer needed ###
                 
@@ -606,7 +606,7 @@ if slots < lower_core_lim:
                                       + ' -b y -wd ' \
                                       + log_dir \
                                       + ' -j y -R y ' \
-                                      + '-P DSGClinicalGenomics -pe smp ' + rm_cores
+                                      + '-pe smp ' + rm_cores
                                       + ' -V ' + rm_script + ' ' \
                                       + rm + ' ' + u_id + ' ' + script_dir
                                     )
