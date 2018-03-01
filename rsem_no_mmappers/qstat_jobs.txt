@@ -1,4 +1,3 @@
-j1_rfPT4
-j1_rcAF16
-j2_rfPT4
-j2_rcAF16
+DESeq
+scellRP
+getchim

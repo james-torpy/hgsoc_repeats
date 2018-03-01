@@ -1,0 +1,2 @@
+ 876561 0.00511 QRLOGIN    jamtor       r     02/15/2018 16:08:05 x10.q@delta-4-4.local              1        
+ 876706 0.00556 QRLOGIN    jamtor       r     02/15/2018 17:10:20 x10.q@omega-1-9.local              4        

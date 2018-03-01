@@ -1,0 +1,9 @@
+rule bwa_map:
+    input:
+        "/home/jamtor/snakemake-tutorial/data/genome.fa",
+        "/home/jamtor/snakemake-tutorial/data/samples/A.fastq"
+    output:
+        "/home/jamtor/snakemake-tutorial/mapped_reads/A.bam"
+    shell:
+        "bwa mem {input} | samtools view -Sb - > {output}"
+

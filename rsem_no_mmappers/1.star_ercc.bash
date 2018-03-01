@@ -7,8 +7,9 @@ echo -e
 
 date
 
-module load gi/zlib/1.2.8
-module load phuluu/samtools/1.4
+module load /share/ClusterShare/Modules/modulefiles/contrib/gi/zlib/1.2.8
+module load /share/ClusterShare/Modules/modulefiles/contrib/phuluu/samtools/1.4
+module load /share/ClusterShare/Modules/modulefiles/contrib/gi/boost/1.53.0
 
 # fetch input variables:
 cores=$1
@@ -75,8 +76,8 @@ echo $outDir
     	--outSAMtype BAM Unsorted"
 
 echo -e
-echo "This is the starline:"
-echo $starline
+echo "This is the star_line:"
+echo $star_line
 
 # run command:
 /home/jamtor/local/bin/STAR --runMode alignReads \
@@ -98,6 +99,6 @@ echo $starline
 		--quantMode TranscriptomeSAM \
       	--outFilterMatchNmin 45 \
     	--outSAMtype BAM SortedByCoordinate \
-        --limitBAMsortRAM 80000000000
+        --limitBAMsortRAM 75000000000
 
 date

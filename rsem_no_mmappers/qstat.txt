@@ -1,4 +1,4 @@
- 791181 5.00532 j1_rfPT4   jamtor       r     01/15/2018 08:45:13 short.q@delta-4-1.local            6        
- 791182 5.00532 j1_rcAF16  jamtor       r     01/15/2018 08:45:13 short.q@delta-4-1.local            6        
- 791183 5.00532 j2_rfPT4   jamtor       r     01/15/2018 08:50:13 short.q@omega-1-2.local            6        
- 791184 5.00532 j2_rcAF16  jamtor       r     01/15/2018 08:50:13 short.q@omega-1-2.local            6        
+ 903821 0.00500 QRLOGIN    jamtor       r     02/27/2018 14:19:33 x10.q@delta-4-9.local              1        
+ 906135 0.00546 DESeq      jamtor       r     03/01/2018 22:29:33 long.q@omega-0-6.local             4        
+ 906333 0.00546 scellRP    jamtor       r     03/02/2018 08:29:31 long.q@omega-0-7.local             4        
+ 906336 0.00500 getchim    jamtor       r     03/02/2018 08:48:46 long.q@omega-0-6.local             1        

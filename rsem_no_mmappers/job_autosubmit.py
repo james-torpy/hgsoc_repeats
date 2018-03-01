@@ -1,6 +1,7 @@
 #!/home/jamtor/local/bin/Python-3.6.3/bin/python3
 
-### 1.bamtofastq_autosubmit.py ###
+
+### job_autosubmit.py ###
 
 # This script detects which output files still must be created from the repeatsPipeline
 # and submits jobs for them #
@@ -10,24 +11,28 @@
 # /home/jamtor/local/bin/Python-3.6.3/bin/python3.6 \
 # /share/ClusterShare/thingamajigs/jamtor/projects/hgsoc_repeats/RNA-seq/scripts/rsem_no_mmappers/job_autosubmit.py
 
-### 0. Define starting variables ###
+### 0. Define starting variables and environment###
 
 import os
+
+os.system('source /etc/profile')
+os.system('source /etc/environment')
+os.system('source /home/jamtor/.bashrc')
+os.system('module load /share/ClusterShare/Modules/modulefiles/contrib/gi/zlib/1.2.8')
+os.system('module load /share/ClusterShare/Modules/modulefiles/contrib/phuluu/samtools/1.4')
+os.system('module load /share/ClusterShare/Modules/modulefiles/contrib/gi/boost/1.53.0')
+
 import pandas as pd
 import glob
 import re
 import time
-
-os.system('source /home/jamtor/.bashrc')
-os.system('module load gi/zlib/1.2.8')
-os.system('module load phuluu/samtools/1.4')
 
 # make directory hierachy:
 projectname = 'hgsoc_repeats'
 sample_type = 'fullsamples/bowtell_primary'
 exp_name = 'rsem_no_mmappers'
 total_no_jobs = 3
-q = 'short'
+q = 'long'
 upper_core_lim = 200
 lower_core_lim = 200
 
@@ -97,7 +102,8 @@ print(rsem_dir)
 os.system("qstat -u '*' | grep jamtor > " + script_dir + "/qstat.txt")
 
 # save qstat job output as file:
-os.system("qstat -u '*' | grep jamtor | grep -v QRLOGIN | awk '{print $3}' > " + script_dir + "/qstat_jobs.txt")
+os.system("qstat -u '*' | grep jamtor | grep -v QRLOGIN | awk '{print $3}' > " + script_dir \
+    + "/qstat_jobs.txt")
 
 # fetch job ids currently running or queued:
 qstat_jobs = []
@@ -113,7 +119,8 @@ print('Jobs already running or queued:')
 print(qstat_jobs)
 
 # save qstat cores output as file:
-os.system("qstat -u '*' | grep jamtor | grep -e 'q@' | grep -v QRLOGIN | awk '{print $9}' > " + script_dir + "/qstat_cores.txt")
+os.system("qstat -u '*' | grep jamtor | grep -e 'q@' | grep -v QRLOGIN | awk '{print $9}' > " 
+    + script_dir + "/qstat_cores.txt")
 
 # fetch core number:
 slots = 0
@@ -144,29 +151,51 @@ if not os.stat(script_dir + '/qstat.txt').st_size == 0:
 
 if slots < lower_core_lim:
     print('')
-    print('Less than ' + str(lower_core_lim) + ' cores being used! Submitting more jobs...')
-
+    print('Less than ' + str(lower_core_lim) + 
+    	' cores being used! Submitting more jobs...')
+    
     ### 2. Check for any errors in the log files and delete output files
-    # from erroneous jobs: ###
-
-    sterms = ['error', 'ERROR', 'Error', 'halted', 'unexpected']
+    # from erroneous jobs, rrecording the sample involved in redo_log.txt: ###
+    
+    sterms = ['error', 'ERROR', 'Error', 'halted', 'unexpected', 'Aborted', 'bad_alloc', 'Please check', 'failed']
     redo = []
+    deleting_jobs = []
     for log in os.listdir(log_dir):
-        if '.o' in log:
+        if 'core' in log:
+        	print('Removing ' + log)
+        	os.system('rm ' + log_dir + '/' + log)
+        elif '.o' in log:
             for term in sterms:
-                if os.path.isfile(log_dir + '/' + log):
-                    if term in open(log_dir + '/' + log).read():
-                        redo.append(
-                            re.sub(
-                                '.o[0-9].*', '', os.path.basename(log)	
-                            )
-                        )
-                        os.system('mv ' + log_dir + '/' + log + ' ' + old_log_dir)
+            	if os.path.isfile(log_dir + '/' + log):
+            		try:
+            			if term in open(log_dir + '/' + log).read():
+            				redo_id = re.sub('.o[0-9].*', '', os.path.basename(log))
+            				redo.append(redo_id)
+            				os.system('mv ' + log_dir + '/' + log + ' ' + old_log_dir)
+            				with open(script_dir + '/qstat.txt') as f:
+            					for line in f:
+            						if redo_id in line:
+            							job_id = line.split()[0]
+            							print("Removing " + redo_id + " with job ID " + job_id 
+            								+ " from job queue as it's logfile contains an error")
+            							os.system('qdel ' + job_id)
+            							deleting_jobs.append(redo_id)
+            		except ValueError:
+            			print(log + " couldn't be read")
+
     redo = list(set(redo))
+
     print('')
     print('The following jobs will be redone:')
+
+    if os.path.isfile(script_dir + '/redo_log.txt'):
+        redo_log = open(script_dir + '/redo_log.txt', 'a')
+    else:
+        redo_log = open(script_dir + '/redo_log.txt', 'w')
+
     for r in redo:
         print(r)
+        redo_log.write("%s\n" % r)
 
 
     ### 3. Check whether job has been previously completed ###
@@ -186,7 +215,7 @@ if slots < lower_core_lim:
     
     # read in raw files and fetch ids:
     in_files = glob.glob(raw_dir + '*.bam')
-    print(in_files)
+    #print(in_files)
     #in_files.extend(glob.glob(raw_dir + 'FT[1-7].bam'))
 	#in_files.extend(glob.glob(raw_dir + 'prPT1[2-7].bam'))
 	#in_files.extend(glob.glob(raw_dir + 'rfPT[1-9].bam'))
@@ -195,9 +224,9 @@ if slots < lower_core_lim:
 	#in_files.extend(glob.glob(raw_dir + 'msST[1-5].bam'))
 	#in_files.extend(glob.glob(raw_dir + 'mrPT[1-8].bam'))
 	#in_files.extend(glob.glob(raw_dir + 'erPT[1-8].bam'))
-    #in_files = [raw_dir + '/prPT9.bam', raw_dir + '/prPT10.bam', raw_dir \
-    #+ '/prPT11.bam', raw_dir + '/rcAF16.bam']
-    #in_files = [raw_dir + '/FT3.bam']
+    #in_files = [raw_dir + '/rfPT3.bam', raw_dir + '/mrPT4.bam']
+    #in_files = [raw_dir + '/FT1.bam', raw_dir + '/FT2.bam']
+    #in_files = [raw_dir + '/erPT6.sub.bam']
     
 for infile in in_files:
     if slots < lower_core_lim:
@@ -211,7 +240,7 @@ for infile in in_files:
         print('The u_id is: ' + u_id)
 
         if u_id not in done_ids:
-    
+
 
             ### Job 0 inputs ###
             # bam to fastq conversion #
@@ -223,10 +252,10 @@ for infile in in_files:
             inputs3 = ['none']
             inputs4 = ['none']
         
-            outputs1 = [fastq_dir + '/' + u_id + '.1.fastq.gz']
-            outputs2 = [fastq_dir + '/' + u_id + '.2.fastq.gz']
-            outputs3 = [fastq_dir + '/' + u_id + '.unpaired.1.fastq.gz']
-            outputs4 = [fastq_dir + '/' + u_id + '.unpaired.2.fastq.gz']
+            outputs1 = [fastq_dir + '/' + u_id + '_1.fastq.gz']
+            outputs2 = [fastq_dir + '/' + u_id + '_2.fastq.gz']
+            outputs3 = [fastq_dir + '/' + u_id + '_unpaired.1.fastq.gz']
+            outputs4 = [fastq_dir + '/' + u_id + '_unpaired.2.fastq.gz']
     
             extra_params = ['none']
             
@@ -240,6 +269,8 @@ for infile in in_files:
             # the job is accepted as complete
             min_output_size1 = [3500000000]
             min_output_size2 = [3500000000]
+            #min_output_size1 = ['none']
+            #min_output_size2 = ['none']
             min_output_size3 = ['none']
             min_output_size4 = ['none']
             
@@ -247,10 +278,10 @@ for infile in in_files:
             ### Job 1 inputs ###
             # alignment of fastqs to gc transcriptome reference #
             
-            cores.append('6')
+            cores.append('7')
             
-            inputs1.append(fastq_dir + '/' + u_id + '.1.fastq.gz')
-            inputs2.append(fastq_dir + '/' + u_id + '.2.fastq.gz')
+            inputs1.append(fastq_dir + '/' + u_id + '_1.fastq.gz')
+            inputs2.append(fastq_dir + '/' + u_id + '_2.fastq.gz')
             inputs3.append('none')
             inputs4.append('none')
             
@@ -270,7 +301,8 @@ for infile in in_files:
             # define the minimum size the output files should be before
             # the job is accepted as complete
             min_output_size1.append('none')
-            min_output_size2.append('none')
+            #min_output_size2.append('none')
+            min_output_size2.append(3500000000)
             min_output_size3.append('none')
             min_output_size4.append('none')
     
@@ -278,14 +310,14 @@ for infile in in_files:
             ### Job 2 inputs ###
             # count gc transcripts from bam using rsem #
             
-            cores.append('6')
+            cores.append('7')
             
             inputs1.append(gc_dir + '/' + u_id + '/Aligned.toTranscriptome.out.bam')
             inputs2.append('none')
             inputs3.append('none')
             inputs4.append('none')
             
-            outputs1.append(rsem_dir + '/' + u_id + '/' + u_id + '.transcriptome.genes.results')
+            outputs1.append(rsem_dir + '/' + u_id + '/' + u_id + '.genes.results')
             outputs2.append('none')
             outputs3.append('none')
             outputs4.append('none')
@@ -296,11 +328,12 @@ for infile in in_files:
             
             qsub_params.append('none')
     
-            dependent_job.append('j2')
+            dependent_job.append('j1')
     
             # define the minimum size the output files should be before
             # the job is accepted as complete
             min_output_size1.append(2000)
+            #min_output_size1.append('none')
             min_output_size2.append('none')
             min_output_size3.append('none')
             min_output_size4.append('none')
@@ -382,14 +415,95 @@ for infile in in_files:
                           + ' '.join(inputs) + ' ' \
                           + ' '.join(outputs) + ' ' \
                           + extra_params[i]
-            
     
+
                 ### 5. Run jobs if they meet the conditions required ###
     
                 print('')
                 if not all([os.path.isfile(inp) for inp in inputs]):
                     print('At least one job ' + str(i) + ' input file does not exist, holding job')
     
+                elif 'j' + str(i) + '_' + u_id in redo and not 'j' + str(i) + '_' + u_id in qstat_jobs:
+
+                    # count how many times this job has been redone before:
+                    redo_count = 0
+
+                    redo_file = open(script_dir + '/redo_log.txt', 'r')
+                    for line in redo_file:
+                        if 'j' + str(i) + '_' + u_id in line:
+                            redo_count +=1
+
+                    print('Job has been redone ' + str(redo_count) + ' times before')
+
+                    cores[i] = str(int(cores[i]) + (2 * (redo_count + 1)))
+                    print('Job previously encountered an error!')
+                    print('Submitting job ' + str(i) + ' with input/s or in dir/s and ' \
+                    	+ str(cores[i]) + ' cores:')
+                    print(inputs)
+                    print('')
+                    print('and output/s or out dir/s:')
+                    print(outputs)
+
+                    # redefine qsub command for jobs:
+                    q_command = '/opt/gridengine/bin/linux-x64/qsub ' \
+                          + '-q ' + q + '.q ' \
+                          + '-N j' + str(i) + '_' + u_id \
+                          + holdj \
+                          + ' -b y -wd ' \
+                          + log_dir \
+                          + ' -j y -R y ' \
+                          + '-pe smp ' + cores[i] + ' ' \
+                          + qsub_params[i] \
+                          + ' -V ' + scripts[i] + ' ' \
+                          + cores[i] + ' ' \
+                          + ' '.join(inputs) + ' ' \
+                          + ' '.join(outputs) + ' ' \
+                          + extra_params[i]
+    
+                    print(q_command)
+                    #os.system(q_command)
+
+                elif 'j' + str(i) + '_' + u_id in redo and 'j' + str(i) + '_' \
+                	+ u_id in deleting_jobs:
+                    
+                    # count how many times this job has been redone before:
+                    redo_count = 0
+
+                    redo_file = open(script_dir + '/redo_log.txt', 'r')
+                    for line in redo_file:
+                        if 'j' + str(i) + '_' + u_id in line:
+                            redo_count +=1
+
+                    print('Job has been redone ' + str(redo_count) + ' times before')
+
+                    cores[i] = str(int(cores[i]) + (2 * (redo_count + 1)))
+                    print('Job previously encountered an error!')
+                    print('Submitting job ' + str(i) + ' with input/s or in dir/s and ' \
+                    	+ str(cores[i]) + ' cores:')
+                    print(inputs)
+                    print('')
+                    print('and output/s or out dir/s:')
+                    print(outputs)
+
+                    # redefine qsub command for jobs:
+                    q_command = '/opt/gridengine/bin/linux-x64/qsub ' \
+                          + '-q ' + q + '.q ' \
+                          + '-N j' + str(i) + '_' + u_id \
+                          + holdj \
+                          + ' -b y -wd ' \
+                          + log_dir \
+                          + ' -j y -R y ' \
+                          + '-pe smp ' + cores[i] + ' ' \
+                          + qsub_params[i] \
+                          + ' -V ' + scripts[i] + ' ' \
+                          + cores[i] + ' ' \
+                          + ' '.join(inputs) + ' ' \
+                          + ' '.join(outputs) + ' ' \
+                          + extra_params[i]
+    
+                    print(q_command)
+                    #os.system(q_command)
+
                 elif all([os.path.isfile(inp) for inp in inputs]) and not all([os.path.isfile(outp) \
                 	for outp in outputs]) and not 'j' + str(i) + '_' + u_id in qstat_jobs:
                     print('Submitting job ' + str(i) + ' with input/s or in dir/s:')
@@ -397,20 +511,10 @@ for infile in in_files:
                     print('')
                     print('and output/s or out dir/s:')
                     print(outputs)
-    
-                    os.system(q_command)
-    
-                elif 'j' + str(i) + '_' + u_id in redo and not 'j' + str(i) + '_' + u_id in qstat_jobs:
-                    cores[i] = int(cores[i]) + 2
-                    print('Job previously encountered an error!')
-                    print('Submitting job ' + str(i) + ' with input/s or in dir/s and ' + str(cores[i]) + ' cores:')
-                    print(inputs)
-                    print('')
-                    print('and output/s or out dir/s:')
-                    print(outputs)
-    
-                    os.system(q_command)
-    
+
+                    print(q_command)
+                    #os.system(q_command)
+     
                 # run job if outputs exist but are not the minimum file size:
                 elif all([os.path.isfile(outp) for outp in outputs]) and size_pass == False and not \
                     'j' + str(i) + '_' + u_id in qstat_jobs:
@@ -421,57 +525,61 @@ for infile in in_files:
                     print('and output/s or out dir/s:')
                     print(outputs)
     
-                    os.system(q_command)
+                    print(q_command)
+                    #os.system(q_command)
     
                 elif all([os.path.isfile(outp) for outp in outputs]) and size_pass == True:
                     print('Job ' + str(i) + ' has previously been completed, no need to run')
                 
-                elif 'j' + str(i) + '_' + u_id in qstat_jobs:
+                elif 'j' + str(i) + '_' + u_id in qstat_jobs and 'j' + str(i) + '_' + u_id not in deleting_jobs:
                     os.system('echo Job ' + str(i) + ' is currently running or queued, no need to run again')
     
     
             ### 6. Remove files no longer needed ###
+            rm_cores = '1'
             
-#                rm_cores = '1'
-#                
-#                rm1 = raw_dir + '/' + u_id + '.bam'
-#                rm2 = gc_dir + '/' + u_id + '/Aligned.out.bam'
-#        
-#                rm_script = (script_dir + '/7.remove_files.bash')
-#        
-#                rm_dependents = ['j0', 'j1', 'j2', 'j3']
-#        
-#        
-#                rm_files = [rm1, rm2]
-#        
-#                holdj = '-hold_jid '
-#                for d in rm_dependents:
-#                    holdj = holdj + d + '_' + u_id + ','
-#                
-#                # double check all outputs have been created:
-#                final_check = []
-#                for n, op in enumerate(outputs):
-#                    final_check.append(os.path.isfile(op))
-#    
-#                final_size_check = []
-#                for n, op in enumerate(outputs):
-#                    if os.path.isfile(op):
-#                        final_size_check.append(os.path.getsize(op) > 2000)
-#    
-#                if all(final_check):
-#                    for k, rm in enumerate(rm_files):
-#                        if not 'r' + str(k) + '_' + u_id in qstat_jobs:
-#                            print('')
-#                            print('Removing ' + rm)
-#                            if os.path.isfile(rm):
-#                                os.system('/opt/gridengine/bin/linux-x64/qsub ' \
-#                                      + '-q ' + q + '.q ' \
-#                                      + '-N r' + str(k) + '_' + u_id + ' ' \
-#                                      + holdj \
-#                                      + ' -b y -wd ' \
-#                                      + log_dir \
-#                                      + ' -j y -R y ' \
-#                                      + '-pe smp ' + rm_cores
-#                                      + ' -V ' + rm_script + ' ' \
-#                                      + rm + ' ' + u_id + ' ' + script_dir
-#                                    )
+            rm1 = raw_dir + '/' + u_id + '.bam'
+            rm2 = gc_dir + '/' + u_id + '/Aligned.sortedByCoord.out.bam'
+            rm3 = rsem_dir + '/' + u_id + '/' + u_id + '.transcript.bam'
+    
+            rm_script = (script_dir + '/3.remove_files.bash')
+    
+            rm_dependents = ['j0', 'j1', 'j2']
+    
+    
+            rm_files = [rm1, rm2, rm3]
+    
+            holdj = '-hold_jid '
+            for d in rm_dependents:
+                holdj = holdj + d + '_' + u_id + ','
+            
+            # double check all outputs have been created:
+            final_check = []
+            for n, op in enumerate(outputs):
+                print(op)
+                final_check.append(os.path.isfile(op))
+
+            final_size_check = []
+            for n, op in enumerate(outputs):
+                if os.path.isfile(op):
+                    #final_size_check.append(os.path.getsize(op) > 2000)
+                    final_size_check.append(os.path.getsize(op) > 0)
+
+            if all(final_check):
+                if all(final_size_check):
+                    for k, rm in enumerate(rm_files):
+                        if not 'r' + str(k) + '_' + u_id in qstat_jobs:
+                            print('')
+                            print('Removing ' + rm)
+                            if os.path.isfile(rm):
+                                os.system('/opt/gridengine/bin/linux-x64/qsub ' \
+                                      + '-q ' + q + '.q ' \
+                                      + '-N r' + str(k) + '_' + u_id + ' ' \
+                                      + holdj \
+                                      + ' -b y -wd ' \
+                                      + log_dir \
+                                      + ' -j y -R y ' \
+                                      + '-pe smp ' + rm_cores
+                                      + ' -V ' + rm_script + ' ' \
+                                      + rm + ' ' + u_id + ' ' + script_dir
+                                    )
