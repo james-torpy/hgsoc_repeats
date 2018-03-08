@@ -20,29 +20,32 @@ library(ggplot2)
 library(ggrepel)
 library(preprocessCore)
 library(edgeR)
+library(org.Hs.eg.db)
 
 # define starting variables:
 project <- "hgsoc_repeats"
 expName <- "exp9"
 
 Type <- "custom3"
-sTypes <- c("FT", "primary_resistant", "acquired_resistant", "drug_responders", 
-  "recurrent_ascites", "metastatic")
-descrip <- "htseq_HGSOC_drug_cats_vs_FT_noEDA"
+#sTypes <- c("FT", "primary_resistant", "acquired_resistant", "drug_responders", 
+#  "recurrent_ascites", "metastatic")
+sTypes <- c("drug_responders", "primary_resistant")
+descrip <- "htseq_drug_responders_vs_primary_resistant"
 
 # define sample groups to compare:
-sGroups <- list("FT", c("prPT", "rfPT"), c("arPT"), c("mrPT", "erPT"), "rcAF", "msST")
+#sGroups <- list("FT", c("prPT", "rfPT"), c("arPT"), c("mrPT", "erPT"), "rcAF", "msST")
+sGroups <- list(c("mrPT", "erPT"), c("prPT", "rfPT"))
 names(sGroups) <- sTypes
 allHGSOC_vs_FT <- FALSE
 cat_by_driver <- FALSE
 
 # define sample group to use as control:
-ctl <- "FT"
+ctl <- "drug_responders"
 
 # specify what combination of repeat genes (repeats), epigenetic modulators (epiMods),
 # RNAi genes (RNAi) and protein-coding genes (pCoding) should contribute to the results:
 #resultTypes <- c("repeats", "epiMods")
-resultTypes <- c("repeats", "all")
+resultTypes <- c("all")
 
 # specify what FDR and log2 fold change thresholds to use:
 FDRthresh <- 0.05
@@ -79,13 +82,13 @@ system(paste0("mkdir -p ", newRobjectDir))
 
 ### 1. Load in all counts ###
 
-if (file.exists(paste0(newRobjectDir, "/", Type, "_counts.RData"))) {
+if (!file.exists(paste0(newRobjectDir, "/", Type, "_counts.RData"))) {
   custom3Counts <- readRDS(paste0(RobjectDir, "/", Type, "_allcounts.htseq.rds"))
   gcCounts <- readRDS(paste0(RobjectDir, "/gc_allcounts.htseq.rds"))
-
+  
   # append gcCounts to custom3Counts:
   Counts <- rbind(custom3Counts, gcCounts)
-
+  
   # make rownames gene_id, get rid of latter column and change
   # storage mode from factor to integer:
   rownames(Counts) <- Counts$gene_id
@@ -198,8 +201,6 @@ if (allHGSOC_vs_FT == TRUE) {
   )
 }
 
-
-
 for (i in 1:length(splt)) {
   if (i==1) {
     typeF <- c(rep(names(splt)[i], splt[i]))
@@ -251,44 +252,83 @@ if (file.exists(paste0(plotDir, "/", Type, "_pcaPrenormGC.pdf"))) {
 }
 
 
-### 3. perform normalisation on counts using RUVseq:
+### 3. perform normalisation on counts using EDA ###
 
 # perform between lane full normalisation:
-nSet <- betweenLaneNormalization(set, which="full",offset=TRUE)
+#nSet <- betweenLaneNormalization(set, which="full",offset=TRUE)
 
 # create post-norm RLE plot:
-if (file.exists(paste0(plotDir, "/", Type, "_RLElaneNormGC.pdf"))) {
-  print(paste0(plotDir, "/", Type, "_RLElaneNormGC.pdf already exists, no need to create"))
+#if (file.exists(paste0(plotDir, "/", Type, "_RLElaneNormGC.pdf"))) {
+#  print(paste0(plotDir, "/", Type, "_RLElaneNormGC.pdf already exists, no need to create"))
+#} else {
+#  print(paste0("Creating ", plotDir, "/", Type, "_RLElaneNormGC.pdf"))
+#  pdf(file = paste0(plotDir, "/", Type, "_RLElaneNormGC.pdf"))
+#  plotRLE(nSet, outline=FALSE, ylim=c(-4, 4))
+#  dev.off()
+#}
+
+# create RUVseq post-norm PCA:
+#if (file.exists(paste0(plotDir, "/", Type, "_pcalaneNormGC.pdf"))) {
+#  print(paste0(plotDir, "/", Type, "_pcalaneNormGC.pdf already exists, no need to create"))
+#} else {
+#  print(paste0("Creating ", plotDir, "/", Type, "_pcalaneNormGC.pdf"))
+#  pdf(file = paste0(plotDir, "/", Type, "_pcalaneNormGC.pdf"), height = 15, width = 20)
+#  plotPCA(nSet, cex=0.7)
+#  dev.off()
+#}
+
+### 3. perform normalisation on counts using EdgeR ###
+
+# perform between lane full normalisation:
+y <- DGEList(counts = Counts, group = typeF)
+
+# normalise for library size:
+y <- calcNormFactors(y)
+
+# create an MDS plot to show relative similarities of the samples and save to plotDir:
+if (file.exists(paste0(plotDir, "/edger_MDS.pdf"))) {
+  paste0(plotDir, "/edger_MDS.pdf already exists")
+  pdf(paste0(plotDir, "/edger_MDS.pdf"),width=16,height=12)
+  plotMDS(y)
 } else {
-  print(paste0("Creating ", plotDir, "/", Type, "_RLElaneNormGC.pdf"))
-  pdf(file = paste0(plotDir, "/", Type, "_RLElaneNormGC.pdf"))
-  plotRLE(nSet, outline=FALSE, ylim=c(-4, 4))
+  paste0("Generating ", plotDir, "/edger_MDS.pdf")
+  pdf(paste0(plotDir, "/edger_MDS.pdf"),width=16,height=12)
+  plotMDS(y)
   dev.off()
 }
 
-# create RUVseq post-norm PCA:
-if (file.exists(paste0(plotDir, "/", Type, "_pcalaneNormGC.pdf"))) {
-  print(paste0(plotDir, "/", Type, "_pcalaneNormGC.pdf already exists, no need to create"))
-} else {
-  print(paste0("Creating ", plotDir, "/", Type, "_pcalaneNormGC.pdf"))
-  pdf(file = paste0(plotDir, "/", Type, "_pcalaneNormGC.pdf"), height = 15, width = 20)
-  plotPCA(nSet, cex=0.7)
-  dev.off()
+for (n in 1:nrow(Counts)) {
+  print(n)
+  if (n==1) {
+    norms <- t(as.matrix(y$samples$norm.factors))
+  } else {
+    norms <- rbind(norms, norms[1,])
+  }
 }
+
+set <- newSeqExpressionSet(Counts, offset = norms, phenoData = data.frame(typeF, row.names=colnames(Counts)))
+
+# design matrix labelling all sample types:
+design <- model.matrix(~0+typeF)
+
+# calculate the deviance residuals from a first-pass GLM regression of the counts on the co-variates of interest (p8 RUVseq manual):
 
 
 ### 4. Perform differential expression comparing normalised FT controls to cancer samples ###
 
 # design matrix labelling all sample types:
-design <- model.matrix(~0+typeF, data=pData(nSet))
+#design <- model.matrix(~0+typeF, data=pData(nSet))
 
 # calculate the deviance residuals from a first-pass GLM regression of the counts on the co-variates of interest (p8 RUVseq manual):
 # estimate dispersion:
-disp <- estimateGLMCommonDisp(counts(nSet),
-                           design, offset=-offst(nSet))
+#disp <- estimateGLMCommonDisp(counts(nSet),
+#                           design, offset=-offst(nSet))
+
+# estimate dispersion:
+disp <- estimateDisp(y, design=design)
 
 # adjust values using dispersion:
-fit <- glmFit(counts(nSet), design, disp, offset=-offst(nSet))
+#fit <- glmFit(counts(nSet), design, disp, offset=-offst(nSet))
 
 saveRDS(fit, file=paste0(newRobjectDir, "/", Type, "DEfit.rds"))
 save.image(paste0(newRobjectDir, "/", Type, "DEdone.rds"))
@@ -325,6 +365,123 @@ for (i in 1:ncol(design)) {
     # fetch all gene DE info, 
     allGenes <- as.data.frame(topTags(lrt, n=Inf))
     
+    # create volcano plots for allGenes:
+    if ("all" %in% resultTypes) {
+      # define sig DE df:
+      if (length(FCthresh) == 0) {
+        sigGenes <- filter(allGenes, FDR < FDRthresh)
+        allGenes$threshold <- as.factor(allGenes$FDR < FDRthresh)
+      } else {
+        sigGenes <- filter(allGenes, (FDR < FDRthresh & logFC < -(FCthresh))|(FDR < FDRthresh & logFC > FCthresh))
+        allGenes$threshold <- as.factor((allGenes$FDR < FDRthresh & allGenes$logFC < -(FCthresh))|(allGenes$FDR <  FDRthresh & allGenes$logFC > FCthresh))
+      }
+      
+      sig <- subset(allGenes, threshold == T)
+      
+      # include the control genes for labelling:
+      for (j in 1:length(posGeneIDs)) {
+        if (j==1) {
+          posGenes <- allGenes[ posGeneIDs[j],]
+        } else {
+          posGenes <- rbind(posGenes,   allGenes[posGeneIDs[j],])
+        }
+      }
+      rownames(posGenes) <- posGeneNames
+      
+      for (j in 1:length(negGeneIDs)) {
+        if (j==1) {
+          negGenes <- allGenes[ negGeneIDs[j],]
+        } else {
+          negGenes <- rbind(negGenes,   allGenes[negGeneIDs[j],])
+        }
+      }
+      rownames(negGenes) <- negGeneNames
+      
+      # set default threshold statuses  for control genes:
+      posGenes$threshold <- "POSITIVE"
+      if (nrow(posGenes[posGenes$FDR< FDRthresh,])>0) {
+        posGenes[posGenes$FDR<  FDRthresh,]$threshold <- "POSSIG"
+      }
+      
+      negGenes$threshold = "NEGATIVE"
+      if (nrow(negGenes[negGenes$FDR< FDRthresh,])>0) {
+        negGenes[negGenes$FDR<  FDRthresh,]$threshold <-  "NEGSIG"
+      }
+      
+      lab <- rbind(rbind(sig,   posGenes), negGenes)
+      allGenes <- rbind(rbind(allGenes,   posGenes), negGenes)
+      lab$genes <- rownames(lab)
+      
+      # set max genes to label:
+      lab <- head(lab, 30)
+      
+      # fetch symbols for labelling:
+      egENSEMBL <- toTable(org.Hs.egENSEMBL)
+      egSYMBOL <- toTable(org.Hs.egSYMBOL)
+      m <- match(row.names(lab), egENSEMBL$ensembl_id)
+      lab$gene_id <- egENSEMBL$gene_id[m]
+      m <- match(lab$gene_id, egSYMBOL$gene_id)
+      lab$symbol <- egSYMBOL$symbol[m]
+      
+      # remove NAs:
+      lab <- na.omit(lab)
+      
+      if (!(ctlInd==1)) {
+        if (i==1) {
+          allReps <- list(allGenes)
+        } else {
+          allReps[[i]] <- allGenes
+        }
+        
+        if (i==1) {
+          sigReps <- list(sig)
+        } else {
+          sigReps[[i]] <- sig
+        }
+      } else {
+        if (i==2) {
+          allReps <- list(allGenes)
+        } else {
+          allReps[[i]] <- allGenes
+        }
+        
+        if (i==2) {
+          sigReps <- list(sig)
+        } else {
+          sigReps[[i]] <- sig
+        }
+      }
+      
+      # plot on volcano plot:
+      p <- ggplot(data=allGenes, aes( x=logFC, y=-log10(FDR),    color=threshold))
+      p <- p + geom_point(data=allGenes)
+      p <- p + geom_text_repel(data=lab, aes(label=symbol))
+      p <- p + theme(legend.position =  "none")
+      p <- p + labs(x="log2 fold change   vs FT control", y="-log10   FDR")
+      #p <- p +  xlim(c(-4, 4))
+      if (length(FCthresh) == 0) {
+        if (file.exists(paste0(plotDir,   "/", Type,  "_volcano_FDR_",   FDRthresh, "_", comp, ".pdf"))) {
+          print(paste0(plotDir, "/",  Type,  "_volcano_FDR_",   FDRthresh, "_", comp, ".pdf"))
+          p
+        } else {
+          print(paste0("Creating  ",plotDir, "/", Type,    "_volcano_FDR_", FDRthresh, "_", comp, ".pdf"))
+          pdf(file = paste0(plotDir, "/",   Type,  "_volcano_FDR_",  FDRthresh, "_", comp, ".pdf"))
+          print(p)
+          dev.off()
+        }
+      } else {
+        if (file.exists(paste0(plotDir, "/",  Type,  "_volcano_FDR",   FDRthresh, "_FC", FCthresh, "_", comp, ".pdf"))) {
+          print(paste0(plotDir, "/",  Type,  "_volcano_FDR",   FDRthresh, "_FC", FCthresh, "_", comp, ".pdf already exists"))
+          p
+        } else {
+          print(paste0("Creating  ", plotDir, "/",  Type,  "_volcano_FDR", FDRthresh, "_FC", FCthresh, "_", comp, ".pdf"))
+          pdf(file = paste0(plotDir, "/",  Type,  "_volcano_FDR",   FDRthresh, "_FC", FCthresh, "_", comp, ".pdf"))
+          print(p)
+          dev.off()
+        }
+      }
+    }
+    
     
     ### 5. Calculate differential expression values of repeats ###
     
@@ -340,7 +497,7 @@ for (i in 1:ncol(design)) {
         sigGenes <- filter(repGenes, (FDR < FDRthresh & logFC < -(FCthresh))|(FDR < FDRthresh & logFC > FCthresh))
         repGenes$threshold <- as.factor((repGenes$FDR < FDRthresh & repGenes$logFC < -(FCthresh))|(repGenes$FDR <  FDRthresh & repGenes$logFC > FCthresh))
       }
-
+      
       sig <- subset(repGenes, threshold == T)
       
       # include the control genes for labelling:
@@ -446,9 +603,9 @@ for (i in 1:ncol(design)) {
           epiGenes$threshold <- as.factor(epiGenes$FDR < FDRthresh)
         } else {
           epiGenes$threshold <- as.factor((epiGenes$FDR < FDRthresh & epiGenes$logFC < -(FCthresh))|(epiGenes$FDR < 
-                                            FDRthresh & epiGenes$logFC > FCthresh))
+                                                                                                       FDRthresh & epiGenes$logFC > FCthresh))
         }
-  
+        
         # create significant epiGenes df:
         epiSig <- subset(epiGenes, threshold == T)
         epiGenes$genes <- rownames(epiGenes)

@@ -61,9 +61,9 @@ system(paste0("mkdir -p ", plotDir))
 system(paste0("mkdir -p ", newRobjectDir))
 
 
-#if (file.exists(paste0(RobjectDir, "/post_DESeq.RData"))) {
-#	load(paste0(RobjectDir, "/post_DESeq.RData"))
-#} else {
+if (file.exists(paste0(RobjectDir, "/post_DESeq.RData"))) {
+	load(paste0(RobjectDir, "/post_DESeq.RData"))
+} else {
   
 	### 1. Load in all counts ###
 
@@ -154,103 +154,102 @@ system(paste0("mkdir -p ", newRobjectDir))
 
 	# load image if loop below has previously been partially completed:
 	if (file.exists(paste0(RobjectDir, "/DElist.rds"))) {
-		readRDS(paste0(RobjectDir, "/DElist.rds"))
+		DElist <- readRDS(paste0(RobjectDir, "/DElist.rds"))
 		upTo <- length(DElist)
 	}
 
 	# define conditions:
 	for (i in upTo:length(colnames(HGSOC))) {
-	  writeLines("\n")
-	  
-	  # define samplename and remove any brackets:
-	  sName <- gsub("\\(|\\)", "", colnames(HGSOC)[i])
-	  print(paste0("Processing sample number ", i, ", i.e. ", sName))
-	  # build counts df:
-	  countDF <- cbind(Counts[,grep("FT", colnames(Counts))], HGSOC[,i])
-	  colnames(countDF)[length(grep("FT", colnames(Counts)))+1] <- colnames(HGSOC)[i]
-	  
-	  conditions <- factor(gsub("^.*FT", "FT", colnames(countDF)), levels = c("FT", colnames(countDF)[(grep("FT", colnames(countDF), invert=T))]))
-	  
-	  # convert countDF into SeqExpressionSet
-	  set <- newSeqExpressionSet(countDF, phenoData = data.frame(conditions, row.names=colnames(countDF)))
-	  
-	  # create pre-norm RLE plot:
-	  if (file.exists(paste0(plotDir, "/", Type, "_", sName, "_vs_FT_RLEPrenormGC.pdf"))) {
-	    print(paste0(plotDir, "/", Type, "_", sName, "_vs_FT_RLEPrenormGC.pdf already exists, no need to create"))
-	  } else {
-	    print(paste0(plotDir, "/", Type, "_", sName, "_vs_FT_RLEPrenormGC.pdf"))
-	    par(mar=c(1,1,1,1))
-	    pdf(file = paste0(plotDir, "/", Type, "_", sName, "_vs_FT_RLEPrenormGC.pdf"))
-	    plotRLE(set)
-	    dev.off()
-	  }
-	  
-	  # create RUVseq pre-norm PCA:
-	  if (file.exists(paste0(plotDir, "/", Type, "_", sName, "_vs_FT__pcaPrenormGC.pdf"))) {
-	    print(paste0(plotDir, "/", Type, "_", sName, "_vs_FT__pcaPrenormGC.pdf already exists, no need to create"))
-	  } else {
-	    print(paste0("Creating ", plotDir, "/", Type, "_", sName, "_vs_FT__pcaPrenormGC.pdf"))
-	    pdf(file = paste0(plotDir, "/", Type, "_", sName, "_vs_FT__pcaPrenormGC.pdf"), height = 10, width = 12)
-	    plotPCA(set, cex=0.7)
-	    dev.off()
-	  }
-	  
-	  
-	  ### 4. perform normalisation on countDF using EDAseq:
-	  
-	  # perform between lane full normalisation:
-	  nSet <- betweenLaneNormalization(set, which="full")
-	  
-	  # create post-norm RLE plot:
-	  if (file.exists(paste0(plotDir, "/", Type, "_", sName, "_vs_FT__RLElaneNormGC.pdf"))) {
-	    print(paste0(plotDir, "/", Type, "_", sName, "_vs_FT__RLElaneNormGC.pdf already exists, no need to create"))
-	  } else {
-	    print(paste0("Creating ", plotDir, "/", Type, "_", sName, "_vs_FT__RLElaneNormGC.pdf"))
-	    pdf(file = paste0(plotDir, "/", Type, "_", sName, "_vs_FT__RLElaneNormGC.pdf"))
-	    plotRLE(nSet, outline=FALSE, ylim=c(-4, 4))
-	    dev.off()
-	  }
-	  
-	  # create RUVseq post-norm PCA:
-	  if (file.exists(paste0(plotDir, "/", Type, "_", sName, "_vs_FT__pcalaneNormGC.pdf"))) {
-	    print(paste0(plotDir, "/", Type, "_", sName, "_vs_FT__pcalaneNormGC.pdf already exists, no need to create"))
-	  } else {
-	    print(paste0("Creating ", plotDir, "/", Type, "_", sName, "_vs_FT__pcalaneNormGC.pdf"))
-	    pdf(file = paste0(plotDir, "/", Type, "_", sName, "_vs_FT__pcalaneNormGC.pdf"), height = 15, width = 20)
-	    plotPCA(nSet, cex=0.7)
-	    dev.off()
-	  }
-	  
-	  
-	  ### 5. Perform DESeq on countDF ###
-
-	  # convert to DESeq data set (from EDAseq manual page 12):
-	  # rename typeF to 'conditions' in nSet, for DESeq:
-	  countsN <- as(nSet, "CountDataSet")
-	  sizeFactors(countsN) <- rep(1, length(sampleNames(phenoData(countsN))))
-	  #varLabels(phenoData(countsN)) <- c("sizeFactor", "condition")
-	  #varMetadata(phenoData(countsN))[2,1] <- "experimental condition, treatment or phenotype"
-	  
-	  # design matrix labelling all sample types:
-	  #design <- model.matrix(~0+conditions, data=pData(nSet))
-	  
-	  countsN <- estimateDispersions(countsN)
-	  res <- nbinomTest(countsN, "FT", colnames(HGSOC)[i])
-	  
-	  # save to results list:
-	  if (i==1) {
-	    DElist <- list(res)
-	  } else {
-	    DElist[[i]] <- res
-	  }
-
-	  # save progress to image:
-	  saveRDS(DElist, paste0(RobjectDir, "/DElist.rds"))
+		writeLines("\n")
+		
+		# define samplename and remove any brackets:
+		sName <- gsub("\\(|\\)", "", colnames(HGSOC)[i])
+		print(paste0("Processing sample number ", i, ", i.e. ", sName))
+		# build counts df:
+		countDF <- cbind(Counts[,grep("FT", colnames(Counts))], HGSOC[,i])
+		colnames(countDF)[length(grep("FT", colnames(Counts)))+1] <- colnames(HGSOC)[i]
+		
+		conditions <- factor(gsub("^.*FT", "FT", colnames(countDF)), levels = c("FT", colnames(countDF)[(grep("FT", colnames(countDF), invert=T))]))
+		
+		# convert countDF into SeqExpressionSet
+		set <- newSeqExpressionSet(countDF, phenoData = data.frame(conditions, row.names=colnames(countDF)))
+		
+		# create pre-norm RLE plot:
+		if (file.exists(paste0(plotDir, "/", Type, "_", sName, "_vs_FT_RLEPrenormGC.pdf"))) {
+		  print(paste0(plotDir, "/", Type, "_", sName, "_vs_FT_RLEPrenormGC.pdf already exists, no need to create"))
+		} else {
+		  print(paste0(plotDir, "/", Type, "_", sName, "_vs_FT_RLEPrenormGC.pdf"))
+		  par(mar=c(1,1,1,1))
+		  pdf(file = paste0(plotDir, "/", Type, "_", sName, "_vs_FT_RLEPrenormGC.pdf"))
+		  plotRLE(set)
+		  dev.off()
+		}
+		
+		# create RUVseq pre-norm PCA:
+		if (file.exists(paste0(plotDir, "/", Type, "_", sName, "_vs_FT__pcaPrenormGC.pdf"))) {
+		  print(paste0(plotDir, "/", Type, "_", sName, "_vs_FT__pcaPrenormGC.pdf already exists, no need to create"))
+		} else {
+		  print(paste0("Creating ", plotDir, "/", Type, "_", sName, "_vs_FT__pcaPrenormGC.pdf"))
+		  pdf(file = paste0(plotDir, "/", Type, "_", sName, "_vs_FT__pcaPrenormGC.pdf"), height = 10, width = 12)
+		  plotPCA(set, cex=0.7)
+		  dev.off()
+		}
+		
+		
+		### 4. perform normalisation on countDF using EDAseq:
+		
+		# perform between lane full normalisation:
+		nSet <- betweenLaneNormalization(set, which="full")
+		
+		# create post-norm RLE plot:
+		if (file.exists(paste0(plotDir, "/", Type, "_", sName, "_vs_FT__RLElaneNormGC.pdf"))) {
+		  print(paste0(plotDir, "/", Type, "_", sName, "_vs_FT__RLElaneNormGC.pdf already exists, no need to create"))
+		} else {
+		  print(paste0("Creating ", plotDir, "/", Type, "_", sName, "_vs_FT__RLElaneNormGC.pdf"))
+		  pdf(file = paste0(plotDir, "/", Type, "_", sName, "_vs_FT__RLElaneNormGC.pdf"))
+		  plotRLE(nSet, outline=FALSE, ylim=c(-4, 4))
+		  dev.off()
+		}
+		
+		# create RUVseq post-norm PCA:
+		if (file.exists(paste0(plotDir, "/", Type, "_", sName, "_vs_FT__pcalaneNormGC.pdf"))) {
+		  print(paste0(plotDir, "/", Type, "_", sName, "_vs_FT__pcalaneNormGC.pdf already exists, no need to create"))
+		} else {
+		  print(paste0("Creating ", plotDir, "/", Type, "_", sName, "_vs_FT__pcalaneNormGC.pdf"))
+		  pdf(file = paste0(plotDir, "/", Type, "_", sName, "_vs_FT__pcalaneNormGC.pdf"), height = 15, width = 20)
+		  plotPCA(nSet, cex=0.7)
+		  dev.off()
+		}
+		
+		
+		### 5. Perform DESeq on countDF ###
+		# convert to DESeq data set (from EDAseq manual page 12):
+		# rename typeF to 'conditions' in nSet, for DESeq:
+		countsN <- as(nSet, "CountDataSet")
+		sizeFactors(countsN) <- rep(1, length(sampleNames(phenoData(countsN))))
+		#varLabels(phenoData(countsN)) <- c("sizeFactor", "condition")
+		#varMetadata(phenoData(countsN))[2,1] <- "experimental condition, treatment or phenotype"
+		
+		# design matrix labelling all sample types:
+		#design <- model.matrix(~0+conditions, data=pData(nSet))
+		
+		countsN <- estimateDispersions(countsN)
+		res <- nbinomTest(countsN, "FT", colnames(HGSOC)[i])
+		
+		# save to results list:
+		if (i==1) {
+		  DElist <- list(res)
+		} else {
+		  DElist[[i]] <- res
+		}
+		names(DElist) <- paste0(colnames(HGSOC), "_vs_FT")
+		saveRDS(DElist, file=paste0(RobjectDir, "/", descrip, "_DElist.rds"))
+		# save progress to image:
+		
+		save.image(file=paste0(RobjectDir, "/post_DESeq.RData"))
 	}
-#}	
-names(DElist) <- paste0(colnames(HGSOC), "_vs_FT")
+}	
 
-saveRDS(DElist, file=paste0(RobjectDir, "/", descrip, "_DElist.rds"))
 
-save.image(file=paste0(RobjectDir, "/post_DESeq.RData"))
+
 
