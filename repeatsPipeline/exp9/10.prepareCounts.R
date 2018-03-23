@@ -5,11 +5,11 @@
 
 # define starting variables:
 project <- "hgsoc_repeats"
-expName <- "exp9"
+expName <- "rsem_no_mmappers"
 
 # define directories:
-homeDir <- "/share/ScratchGeneral/jamtor/"
-#homeDir <- "/Users/jamestorpy/clusterHome"
+#homeDir <- "/share/ScratchGeneral/jamtor/"
+homeDir <- "/Users/jamestorpy/clusterHome"
 projectDir <- paste0(homeDir, "/projects/", 
   project, "/")
 resultsDir <- paste0(projectDir, "/RNA-seq/results/")

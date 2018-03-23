@@ -9,7 +9,7 @@ library(dplyr)
 project <- "hgsoc_repeats"
 expName <- "exp9"
 Type <- "custom3"
-descrip <- "htseq_hgsoc_split_by_drug_response_acquired_resistant_vs_rest"
+descrip <- "htseq_HGSOC_unknown_vs_HRD_CCNEamp"
 
 # specify what combination of repeat genes (repeats), epigenetic modulators (epiMods),
 # RNAi genes (RNAi) and protein-coding genes (pCoding) should contribute to the results:
@@ -37,15 +37,12 @@ system(paste0("mkdir -p ", plotDir))
 ### 1. Load in inputs ###
 
 # load each comparison:
-comparisons <- list(readRDS(file=paste0(projectDir, "/Robjects/exp9/htseq_hgsoc_split_by_drug_response_vs_resistant/", Type, "_DEsigReps.rds")))
-comparisons[[2]] <- readRDS(file=paste0(projectDir, "/Robjects/exp9/htseq_hgsoc_split_by_drug_response_vs_drug_responders/", Type, "_DEsigReps.rds"))
-comparisons[[3]] <- readRDS(file=paste0(projectDir, "/Robjects/exp9/htseq_hgsoc_split_by_drug_response_vs_ascites/", Type, "_DEsigReps.rds"))
-comparisons[[4]] <- readRDS(file=paste0(projectDir, "/Robjects/exp9/htseq_hgsoc_split_by_drug_response_vs_metastatic/", Type, "_DEsigReps.rds"))
-names(comparisons) <- c("vsResistant", "vsDrugResponders", "vsAscites", "vsMetastatic")
+comparisons <- list(readRDS(file=paste0(projectDir, "/Robjects/exp9/htseq_HGSOC_HRD_unknown_vs_CCNEamp/", Type, "_DEsigReps.rds")))
+comparisons[[2]] <- readRDS(file=paste0(projectDir, "/Robjects/exp9/htseq_HGSOC_CCNEamp_unknown_vs_HRD/", Type, "_DEsigReps.rds"))
 
-# fetch acquired resistance DFs and add to list:
+# fetch unknown_driver DFs and add to list:
 for (n in 1:length(comparisons)) {
-  ind <- grep("acquired_resistant", names(comparisons[[n]]))
+  ind <- grep("unknown_driver", names(comparisons[[n]]))
   if (n==1) {
     allGene <- list(comparisons[[n]][[ind]])
     names(allGene)[n] <- names(comparisons[[n]])[ind]
@@ -56,7 +53,7 @@ for (n in 1:length(comparisons)) {
 }
 
 # fetch sample number to add to colnames:
-sample_nos <- readRDS(paste0(projectDir, "/Robjects/exp9/htseq_hgsoc_split_by_drug_response_vs_resistant//sample_no_per_cat.rds"))
+sample_nos <- readRDS(paste0(projectDir, "/Robjects/exp9/htseq_HGSOC_HRD_unknown_vs_CCNEamp//sample_no_per_cat.rds"))
 
 # add sample numbers per group to names:
 Names <- names(allGene)
