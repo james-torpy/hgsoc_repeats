@@ -1,13 +1,13 @@
-### 13.DE_master.R ###
+### 13.DE_master_2.R ###
 
 # This script takes a list of dfs of different classes and types of repeat counts for
 # HGSOC and FT control RNA-seq data sets and performs DE analysis:
 
 # Run on cluster with:
 #briR
-#qsub -N salDE -b y -wd \
+#qsub -N salDE2 -b y -wd \
 #/share/ClusterShare/thingamajigs/jamtor/projects/hgsoc_repeats/RNA-seq/logs/exp9/DE \
-#-j y -R y -pe smp 2 -V "Rscript /share/ClusterShare/thingamajigs/jamtor/projects/hgsoc_repeats/RNA-seq/scripts/repeatsPipeline/exp9/13.DE_master.R"
+#-j y -R y -pe smp 2 -V "Rscript /share/ClusterShare/thingamajigs/jamtor/projects/hgsoc_repeats/RNA-seq/scripts/repeatsPipeline/exp9/13.DE_master_2.R"
 
 ### 0. Define variables/paths ###
 
@@ -44,23 +44,23 @@ Type <- "custom3"
 #sTypes <- c("bothDrivers", "FT", "HRD", "CCNEamp", "unknown_driver")
 #descrip <- "htseq_EdgeR_primary_HGSOC_CCNEamp_vs_HRD"
 
-sTypes <- c("bothDrivers", "FT", "HRD", "CCNEamp", "unknown_driver")
-descrip <- "SalmonTE_primary_HGSOC_CCNEamp_vs_HRD"
+#sTypes <- c("bothDrivers", "FT", "HRD", "CCNEamp", "unknown_driver")
+#descrip <- "htseq_SalmonTE_primary_HGSOC_CCNEamp_vs_HRD"
 
 #sTypes <- c("FT", "HGSOC")
 #sGroups <- list("FT", c("prPT", "rfPT", "arPT", "mrPT", "erPT"))
 #names(sGroups) <- sTypes
 #descrip <- "htseq_EdgeR_primary_HGSOC_vs_FT"
 
-#sTypes <- c("FT", "primaryHGSOC")
-#sGroups <- list("FT", c("prPT", "rfPT", "arPT", "mrPT", "erPT"))
-#names(sGroups) <- sTypes
-#descrip <- "htseq_EdgeR_25PT_HGSOC_vs_FT"
+sTypes <- c("FT", "primaryHGSOC")
+sGroups <- list("FT", c("prPT", "rfPT", "arPT", "mrPT", "erPT"))
+names(sGroups) <- sTypes
+descrip <- "SalmonTE_primary_HGSOC_vs_FT"
 
 
 # define sample groups to compare:
 allHGSOC_vs_FT <-FALSE
-cat_by_driver <- TRUE
+cat_by_driver <- FALSE
 EDAnormalise <- FALSE
 primaryOnly <- TRUE
 SalmonTE <- TRUE
@@ -73,7 +73,7 @@ customSamples <- FALSE
 #         "AOCS_174_FT", "AOCS_175_FT", "AOCS_176_FT", "AOCS_177_FT", "AOCS_178_FT")
 
 # define sample group to use as control:
-ctl <- "HRD"
+ctl <- "FT"
 
 # specify what combination of repeat genes (repeats), epigenetic modulators (epiMods),
 # RNAi genes (RNAi) and protein-coding genes (pCoding) should contribute to the results:
@@ -82,7 +82,7 @@ resultTypes <- c("repeats", "all")
 
 # specify what FDR and log2 fold change thresholds to use:
 FDRthresh <- 0.05
-FCthresh <- 1
+FCthresh <- NA
 
 # specify control genes to include:
 posGeneIDs <- c("ENSG00000111640", "ENSG00000196776")
@@ -116,27 +116,21 @@ system(paste0("mkdir -p ", newRobjectDir))
 ### 1. Load in all counts ###
 
 if ( SalmonTE ) {
-  if ( !file.exists(paste0(RobjectDir, "/", Type, "_counts.RData")) ) {
-    RobjectDir <- paste0(projectDir, "/RNA-seq/Robjects/salmonTE/")
-    custom3Counts <- readRDS(paste0(RobjectDir, "/", Type, "_counts.SalmonTE.rds"))
-    gcCounts <- readRDS(paste0(RobjectDir, "/gc_counts.Salmon.rds"))
-    
-    # append gcCounts to custom3Counts:
-    Counts <- rbind(custom3Counts, gcCounts)
-    
-    # make rownames gene_id, get rid of latter column and change
-    # storage mode from factor to integer:
-    rownames(Counts) <- Counts$gene_id
-    Counts <- subset(Counts, select=-gene_id)
-    
-    saveRDS(Counts, file=paste0(RobjectDir, "/", Type, "_counts.RData"))
-    
-  } else {
-    Counts <- readRDS(file=paste0(RobjectDir, "/", Type, "_counts.RData"))
-  }
+  RobjectDir <- paste0(projectDir, "/RNA-seq/Robjects/salmonTE/")
+  custom3Counts <- readRDS(paste0(RobjectDir, "/", Type, "_counts.SalmonTE.rds"))
+  gcCounts <- readRDS(paste0(RobjectDir, "/gc_counts.Salmon.rds"))
+  
+  # append gcCounts to custom3Counts:
+  Counts <- rbind(custom3Counts, gcCounts)
+  
+  # make rownames gene_id, get rid of latter column and change
+  # storage mode from factor to integer:
+  rownames(Counts) <- Counts$gene_id
+  Counts <- subset(Counts, select=-gene_id)
+  
 } else if ( !file.exists(paste0(RobjectDir, "/", Type, "_counts.RData")) ) {
   custom3Counts <- readRDS(paste0(RobjectDir, "/", Type, "_allcounts.htseq.rds"))
-  gcCounts <- readRDS(paste0(RobjectDir, "/gc_counts.Salmon.rds"))
+  gcCounts <- readRDS(paste0(RobjectDir, "/gc_allcounts.htseq.rds"))
   
   # append gcCounts to custom3Counts:
   Counts <- rbind(custom3Counts, gcCounts)

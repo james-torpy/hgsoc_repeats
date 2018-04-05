@@ -5,7 +5,7 @@
 
 # Run on cluster with:
 #briR
-#qsub -N patchcomp -hold_jid EDAEdgeR -b y -wd \
+#qsub -N patchcomp -hold_jid salPatchComp -b y -wd \
 #/share/ClusterShare/thingamajigs/jamtor/projects/hgsoc_repeats/RNA-seq/logs/exp9/DE \
 #-j y -R y -pe smp 2 -V "Rscript /share/ClusterShare/thingamajigs/jamtor/projects/hgsoc_repeats/RNA-seq/scripts/repeatsPipeline/exp9/19.patch_compare.R"
 
@@ -25,10 +25,10 @@ project <- "hgsoc_repeats"
 expName <- "exp9"
 
 Type <- "all"
-descrip <- "htseq_DESeq2_primary_CCNEamp_vs_HRD"
+descrip <- "SalmonTE_primary_HGSOC_CCNEamp_vs_HRD"
 
-EdgeR <- FALSE
-DESeq2 <- TRUE
+EdgeR <- TRUE
+DESeq2 <- FALSE
 
 # define directories:
 homeDir <- "/Users/jamestorpy/clusterHome/"
@@ -36,12 +36,12 @@ homeDir <- "/Users/jamestorpy/clusterHome/"
 projectDir <- paste0(homeDir, "/projects/", project)
 rawDir <- paste0(projectDir, "/RNA-seq/raw_files/fullsamples/bowtell_primary/")
 resultsDir <- paste0(projectDir, "/RNA-seq/results")
-RobjectDir <-  paste0(projectDir, "/RNA-seq/Robjects/",
-                      expName, "/", descrip, "/")
+RobjectDir <- paste0(projectDir, "/RNA-seq/Robjects/",
+                      expName, "/DEverify/", descrip, "/")
 newRobjectDir <- paste0(projectDir, "/RNA-seq/Robjects/",
-                        expName, "/DEcompare/", descrip, "/")
+                        expName, "/DEverify/", descrip, "/")
 plotDir <- paste0(resultsDir, "/R/", expName,
-                  "/plots/DEplots/DEcompare/htseq_vs_patch/", descrip, "/")
+                  "/plots/DEplots/DEverify/htseq_vs_patch/", descrip, "/")
 
 system(paste0("mkdir -p ", newRobjectDir))
 system(paste0("mkdir -p ", plotDir))
@@ -289,3 +289,11 @@ if ( EdgeR == TRUE) {
 }
 
 
+### 5. Create scatterplot with my_logFC and Patch_FC ###
+
+pdf(file = paste0(plotDir, "/htseq_vs_patch_CCNEamp_vs_HRD_scatter.pdf"))
+plot(FC, xlab="my logFC (n=25)", ylab=("Patch logFC (n=75"))
+dev.off()
+
+# calculate Spearman correlation between my and Patch logFC:
+corr <- cor(FC, method="spearman")
